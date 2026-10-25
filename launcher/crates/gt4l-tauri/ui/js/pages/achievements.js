@@ -75,8 +75,13 @@
 
     var container = h("div", { class: "ra-page" });
     content.appendChild(container);
+    // A later account/options action invalidates a slower status/login response.
+    var requestSerial = 0;
 
-    function applyState(next, toastMsg) {
+    function applyState(next, toastMsg, requestId) {
+      if (requestId !== requestSerial || !container.isConnected) {
+        return;
+      }
       if (next && typeof next === "object") {
         state.enabled = !!next.enabled;
         state.hardcore = !!next.hardcore;
@@ -99,6 +104,7 @@
     }
 
     function saveOptions(enabled, hardcore, encore) {
+      var requestId = ++requestSerial;
       GT4.backend.call("ra_set_options", {
         enabled: !!enabled,
         hardcore: !!hardcore,
@@ -107,10 +113,16 @@
         if (res && state.game && !res.game) {
           res.game = state.game;
         }
-        applyState(res, "");
+        applyState(res, "", requestId);
       }, function (err) {
-        GT4.ui.toast(GT4.errorText(err), true);
+        showError(err, requestId);
       });
+    }
+
+    function showError(err, requestId) {
+      if (requestId === requestSerial && container.isConnected) {
+        GT4.ui.toast(GT4.errorText(err), true);
+      }
     }
 
     function openSignInModal() {
@@ -148,14 +160,20 @@
           return;
         }
         busy = true;
+        var requestId = ++requestSerial;
         statusLine.textContent = "Signing in to retroachievements.org...";
         GT4.backend.call("ra_login", { username: u, password: p }).then(function (res) {
           busy = false;
+          if (requestId !== requestSerial || !container.isConnected) {
+            return;
+          }
           dialogApi.close();
-          applyState(res, "Signed in as " + (res.displayName || u));
+          applyState(res, "Signed in as " + (res.displayName || u), requestId);
         }, function (err) {
           busy = false;
-          statusLine.textContent = GT4.errorText(err);
+          if (requestId === requestSerial && container.isConnected) {
+            statusLine.textContent = GT4.errorText(err);
+          }
         });
       }
 
@@ -210,10 +228,11 @@
             primary: true,
             danger: true,
             run: function () {
+              var requestId = ++requestSerial;
               GT4.backend.call("ra_logout", {}).then(function (res) {
-                applyState(res, "Signed out of RetroAchievements");
+                applyState(res, "Signed out of RetroAchievements", requestId);
               }, function (err) {
-                GT4.ui.toast(GT4.errorText(err), true);
+                showError(err, requestId);
               });
             }
           }
@@ -222,10 +241,11 @@
     }
 
     function refreshStatus() {
+      var requestId = ++requestSerial;
       GT4.backend.call("ra_status", {}).then(function (res) {
-        applyState(res, "Refreshed RetroAchievements status");
+        applyState(res, "Refreshed RetroAchievements status", requestId);
       }, function (err) {
-        GT4.ui.toast(GT4.errorText(err), true);
+        showError(err, requestId);
       });
     }
 
@@ -400,10 +420,11 @@
     }
 
     paint();
+    var requestId = ++requestSerial;
     return GT4.backend.call("ra_status", {}).then(function (res) {
-      applyState(res, "");
+      applyState(res, "", requestId);
     }, function (err) {
-      GT4.ui.toast(GT4.errorText(err), true);
+      showError(err, requestId);
     });
   };
 })(window);

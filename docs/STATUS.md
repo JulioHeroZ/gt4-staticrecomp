@@ -1,4 +1,16 @@
 # Current Status
+## TASK-119 release 1.2.4: RetroAchievements (2026-10-25)
+
+Owner approved final stable 1.2.4 publication on 2026-10-25. The contributor commit is preserved.
+Final launcher and installer rebuilt without a label; CTest 43/43 passed (Python 641 tests,
+42 skipped), final Rust 379 passed/4 ignored, UI focus 114/114 and navigation 150/150.
+All 24 final installer payload files match their sources. Installer SHA256:
+`100192215644918fa1bdd876810efa48f743399354d5c23d9de651b0c4d8be6d`.
+Prepared for v1.2.4 as Latest; rc1 private draft and public 1.3.0-rc5 retained.
+Real-account login, online unlocks, gameplay notifications and installer execution were not tested.
+Owner-approved scope: legacy English UI, en-US/pt-BR notes, installer-only distribution.
+Spec II remains unsupported here; RA must stay disabled for it in the later 1.3.0 port.
+ai-memory MCP unavailable; see TASK-119 and the daily journal.
 
 ## Release 1.2.3 published (2026-10-22, hotfix: TASK-092, 093, 094, 096)
 

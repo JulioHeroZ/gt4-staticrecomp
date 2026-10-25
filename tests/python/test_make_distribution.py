@@ -58,6 +58,7 @@ class MakeDistributionTest(unittest.TestCase):
             self.assertIn(f'shaders/{shader}.spv', names)
         self.assertIn('licenses/LICENSE-GT4Recomp.txt', names)
         self.assertIn('licenses/LICENSE-ps2-web-recomp.txt', names)
+        self.assertIn('licenses/LICENSE-rcheevos.txt', names)
         self.assertIn('licenses/THIRD_PARTY.md', names)
         # TASK-075: SDL3.dll and its licence (zlib) ship next to the executable.
         self.assertIn('SDL3.dll', names)

@@ -81,6 +81,12 @@ Surfaceless = true
 {dump_lines}"""
 
 
+def gs_config_for_run(run, scale, dump_lines=''):
+    """Keep all renderer writes inside this run, including caches and DataRoot."""
+    run = Path(run)
+    return GS_INI.format(scale=scale, cache=run / 'gs-cache', data=run / 'gs-data', dump_lines=dump_lines)
+
+
 def sha256(path):
     digest = hashlib.sha256()
     with open(path, 'rb') as handle:
@@ -153,9 +159,7 @@ def main():
         if options.frame_every:
             # gt4-gs treats DumpEvery = 0 as "every frame", so the keys are omitted when no dumps are wanted.
             dump_lines = f'DumpDir = {run / "gs-frames"}\nDumpEvery = {options.frame_every}\n'
-        (run / 'gt4-gs.ini').write_text(GS_INI.format(scale=options.scale, cache=assets / 'private/slice193-gt4gs-cache',
-                                                      data=assets / 'private/slice193-gt4gs-data',
-                                                      dump_lines=dump_lines), encoding='utf-8')
+        (run / 'gt4-gs.ini').write_text(gs_config_for_run(run, options.scale, dump_lines), encoding='utf-8')
         environment.update({'GT4_RENDERER': 'pcsx2', 'GT4_GS_PROCESS': str(gs_exe),
                             'GT4_GS_CONFIG': str(run / 'gt4-gs.ini')})
     for assignment in options.env:

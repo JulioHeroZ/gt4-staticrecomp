@@ -441,6 +441,57 @@ fn retroachievements_options_and_launch_environment() {
 }
 
 #[test]
+fn retroachievements_refresh_cannot_restore_a_logged_out_account_or_old_options() {
+    use gt4l_core::retroachievements::{RaAccountSession, RaConfig};
+    let root = scratch("ra-refresh-race");
+    let shared = launch(&DataDirs::new(root.join("data")), &Pins::embedded().unwrap());
+    let path = lock(&shared).user_dirs.retroachievements_file();
+    let original = RaConfig {
+        username: "TestDriver".into(), token: "test-only-token".into(), ..RaConfig::default()
+    };
+    original.save(&path).unwrap();
+    let session = || RaAccountSession {
+        username: "TestDriver".into(), token: "test-only-token".into(), display_name: "TestDriver".into(),
+        score: 42, score_softcore: 7,
+    };
+
+    let logged_out = commands::ra_status_with(&shared, |_| {
+        // This executes inside the in-flight network seam, while no application lock is held.
+        commands::ra_logout_of(&shared).unwrap();
+        (Some(session()), None)
+    }).unwrap();
+    assert!(!logged_out.signed_in);
+    assert!(!RaConfig::load(&path).is_signed_in(), "a late refresh must not put the token back on disk");
+
+    original.save(&path).unwrap();
+    let changed = commands::ra_status_with(&shared, |_| {
+        commands::ra_set_options_of(false, true, true, &shared).unwrap();
+        (Some(session()), None)
+    }).unwrap();
+    assert!(!changed.enabled);
+    assert!(changed.hardcore && changed.encore);
+    let saved = RaConfig::load(&path);
+    assert!(!saved.enabled && saved.hardcore && saved.encore);
+    assert_eq!(saved.score, 0, "discard the invalidated response instead of saving its account snapshot");
+
+    let refreshed = commands::ra_status_with(&shared, |_| (Some(session()), None)).unwrap();
+    assert_eq!(refreshed.score, 42);
+    assert!(!refreshed.enabled && refreshed.hardcore && refreshed.encore);
+    let _ = fs::remove_dir_all(root);
+}
+
+#[test]
+fn about_identifies_the_candidate_display_version() {
+    let root = scratch("about-release-label");
+    let shared = launch(&DataDirs::new(root.join("data")), &Pins::embedded().unwrap());
+    let about = commands::about_info_of(&shared).unwrap();
+    assert_eq!(about.version, gt4l_core::LAUNCHER_DISPLAY_VERSION);
+    assert_eq!(about.gt4recomp, gt4l_core::LAUNCHER_DISPLAY_VERSION);
+    assert!(about.text.contains(gt4l_core::LAUNCHER_DISPLAY_VERSION));
+    let _ = fs::remove_dir_all(root);
+}
+
+#[test]
 #[ignore = "real discs, a real copy of the image and a real download; see the module comment"]
 fn real_flow_end_to_end() {
     let data = PathBuf::from(std::env::var("GT4_AUDIT_DATA_DIR").expect("set GT4_AUDIT_DATA_DIR"));

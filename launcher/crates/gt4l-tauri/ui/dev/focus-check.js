@@ -17,7 +17,7 @@
 (function (root) {
   "use strict";
   var GT4 = root.GT4;
-  var TABS = ["graphics", "controls", "saves", "replays", "about"];
+  var TABS = ["graphics", "controls", "saves", "replays", "achievements", "about"];
   var lines = [];
   var failures = 0;
 
@@ -485,6 +485,53 @@
     delete GT4.devGamepads;
   }
 
+  async function achievementsChecks() {
+    await setHash("#/settings/achievements");
+    var page = document.querySelector(".ra-page");
+    check("Achievements has a signed-out account state", !!page && page.textContent.indexOf("Not signed in") >= 0, "no signed-out state");
+    var signIn = page.querySelector("button.primary");
+    signIn.click();
+    await wait(60);
+    var modal = document.querySelector(".modal");
+    check("Achievements opens the account login dialog", !!modal && !!modal.querySelector("input[type=password]"), "no password field");
+    modal.querySelector("input[type=text]").value = "TestDriver";
+    modal.querySelector("input[type=password]").value = "test-only-password";
+    modal.querySelector("button.primary").click();
+    await wait(150);
+    page = document.querySelector(".ra-page");
+    check("Achievements paints the signed-in account", page.textContent.indexOf("TestDriver") >= 0, "no account name");
+    check("Achievements paints the synthetic progress list", page.querySelectorAll(".ra-ach-row").length === 3, "missing sample rows");
+    page.querySelector("button[aria-label=\"Hardcore mode\"]").click();
+    await wait(100);
+    var saved = await GT4.backend.call("ra_status", {});
+    check("Achievements saves the Hardcore toggle", saved.hardcore === true, "option was not saved");
+
+    // Hold an old signed-in status response while a real UI logout completes.
+    var originalCall = GT4.backend.call;
+    var release = null;
+    var deferStatus = true;
+    GT4.backend.call = function (command, args) {
+      if (command === "ra_status" && deferStatus) {
+        deferStatus = false;
+        return new Promise(function (resolve) { release = function () { resolve(saved); }; });
+      }
+      return originalCall(command, args);
+    };
+    try {
+      GT4.hooks.x();
+      page.querySelector("button.danger").click();
+      await wait(40);
+      document.querySelector(".modal button.danger").click();
+      await wait(100);
+      check("Achievements logout clears the account", !(await originalCall("ra_status", {})).signedIn, "mock still signed in");
+      release();
+      await wait(100);
+      check("a late status response cannot undo UI logout", document.querySelector(".ra-page").textContent.indexOf("Not signed in") >= 0, "old account reappeared");
+    } finally {
+      GT4.backend.call = originalCall;
+    }
+  }
+
   // The screenshot state (scenario "4k", name kept for the screenshot list): Graphics with Render scale at 200%, the
   // slider focused in pad mode (TASK-080 addendum: there is no Internal resolution row any more).
   async function scenario4k() {
@@ -528,6 +575,7 @@
       await valueChecks();
       await advancedSectionChecks();
       await controlsChecks();
+      await achievementsChecks();
     } catch (err) {
       check("the checks ran to the end", false, String(err && err.message ? err.message : err));
     }

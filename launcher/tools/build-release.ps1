@@ -5,7 +5,7 @@
 # Cargo's own trim-paths option is still unstable (Cargo 1.99). The prefixes depend on the machine, so they are set
 # here at build time and not in a committed .cargo/config.toml.
 #
-#   powershell -ExecutionPolicy Bypass -File launcher\tools\build-release.ps1 [-Sdl3Root <folder>]
+#   powershell -ExecutionPolicy Bypass -File launcher\tools\build-release.ps1 [-Sdl3Root <folder>] [-Label rc1]
 #
 # Steps: set CARGO_ENCODED_RUSTFLAGS (one flag per entry, so paths with spaces survive), run
 # `cargo tauri build --no-bundle`, restore any Cargo.toml the Tauri CLI rewrote, then scan the executable (ASCII and
@@ -13,9 +13,14 @@
 # CARGO_ENCODED_RUSTFLAGS replaces RUSTFLAGS and target rustflags; the workspace sets none today.
 
 param(
-    [string]$Sdl3Root = "C:/Antigravity/gt4-staticrecomp/private/tooling/sdl3-3.4.18"
+    [string]$Sdl3Root = "C:/Antigravity/gt4-staticrecomp/private/tooling/sdl3-3.4.18",
+    [string]$Label = ""
 )
 $ErrorActionPreference = "Stop"
+if ($Label -and $Label -cnotmatch '^rc[1-9][0-9]*$') {
+    throw "-Label must be empty or rc<N> (positive N, no leading zero)"
+}
+$savedLabel = $env:GT4_RELEASE_LABEL
 
 $launcher = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $checkout = (Resolve-Path (Join-Path $launcher "..")).Path
@@ -45,10 +50,13 @@ foreach ($file in $manifests) { $saved[$file.FullName] = [System.IO.File]::ReadA
 
 Push-Location (Join-Path $launcher "crates\gt4l-tauri")
 try {
+    # Set even for an unlabeled build so an inherited label cannot accidentally produce a candidate.
+    $env:GT4_RELEASE_LABEL = $Label
     cargo tauri build --no-bundle
     if ($LASTEXITCODE -ne 0) { throw "cargo tauri build failed ($LASTEXITCODE)" }
 } finally {
     Pop-Location
+    $env:GT4_RELEASE_LABEL = $savedLabel
     foreach ($path in $saved.Keys) {
         $now = [System.IO.File]::ReadAllBytes($path)
         if ([Convert]::ToBase64String($now) -ne [Convert]::ToBase64String($saved[$path])) {
@@ -77,4 +85,5 @@ foreach ($needle in $needles) {
 }
 if ($hits -ne 0) { throw "$hits build path(s) left in $exe" }
 $hash = (Get-FileHash -Algorithm SHA256 $exe).Hash.ToLower()
-Write-Host "GT4Recomp.exe: $((Get-Item $exe).Length) bytes, sha256 $hash; no user or build path found"
+$labelText = if ($Label) { ", label $Label" } else { "" }
+Write-Host "GT4Recomp.exe: $((Get-Item $exe).Length) bytes, sha256 $hash$labelText; no user or build path found"

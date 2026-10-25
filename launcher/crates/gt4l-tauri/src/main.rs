@@ -28,7 +28,7 @@ use std::time::Instant;
 
 use tauri::Manager;
 
-use gt4l_core::LAUNCHER_VERSION;
+use gt4l_core::LAUNCHER_DISPLAY_VERSION;
 
 fn main() {
     // TASK-091 (1.2.1 start-up timings): the time from this point to `ui_ready` is logged, with the steps before the window.
@@ -59,7 +59,7 @@ fn main() {
     };
     let dirs = startup.layout.data.clone();
     let _ = std::fs::create_dir_all(dirs.root());
-    state::log(&dirs, &format!("GT4Recomp {LAUNCHER_VERSION} starting from {}", exe_dir.display()));
+    state::log(&dirs, &format!("GT4Recomp {LAUNCHER_DISPLAY_VERSION} starting from {}", exe_dir.display()));
     state::log(&dirs, &format!("start-up: data layout and relocation ready after {} ms", started.elapsed().as_millis()));
     for line in &startup.log {
         state::log(&dirs, line);

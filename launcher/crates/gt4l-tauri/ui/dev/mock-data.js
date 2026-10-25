@@ -8,6 +8,7 @@
  *   pick=spec                                       (setup: the picker returns a Spec II image, refused)
  *   running=1                                       (game running at start)
  *   focus=play                                      (home: focus the Play button, for screenshots)
+ *   ra=signedin                                     (Achievements: synthetic account and progress, no network)
  *   Controls: pad=A,LB,DpadRight lt=0.6 rt=0.2 lx=0.7 ly=-0.45 rx= ry= pads=2 nopad=1 (a still dev controller),
  *             select=circle mode=key capture=hold|conflict remap=1 locked=1
  */
@@ -379,8 +380,48 @@
       migration: { running: false, item: "", bytes_done: 0, bytes_total: 0, notice: "", problem: false } };
   }
 
+  // Synthetic RetroAchievements data belongs only to this dev backend; it never contacts a server.
+  var raGame = {
+    game_id: 20580, title: "Gran Turismo 4", total_achievements: 3, unlocked_achievements: 2,
+    total_points: 35, unlocked_points: 15,
+    achievements: [
+      { id: 1001, title: "National B License", description: "Acquire the National B License.", points: 10,
+        unlocked: true, unlocked_hardcore: true, badge_name: "", type_label: "Progression" },
+      { id: 1002, title: "First Victory", description: "Win your first race.", points: 5,
+        unlocked: true, unlocked_hardcore: false, badge_name: "", type_label: "" },
+      { id: 1003, title: "Championship Champion", description: "Win the championship.", points: 20,
+        unlocked: false, unlocked_hardcore: false, badge_name: "", type_label: "" }
+    ]
+  };
+  var raState = { enabled: true, hardcore: false, encore: false, signedIn: query.get("ra") === "signedin",
+    username: "", displayName: "", score: 0, scoreSoftcore: 0, game: null };
+  function raSignIn(username) {
+    raState.signedIn = true;
+    raState.username = raState.displayName = username;
+    raState.score = 1250;
+    raState.scoreSoftcore = 400;
+    raState.game = raGame;
+  }
+  if (raState.signedIn) raSignIn("DemoDriver");
+
   function invoke(command, args) {
     args = args || {};
+    if (command === "ra_login") {
+      if (!args.username || !args.password) throw new Error("Enter a mock username and password.");
+      raSignIn(args.username);
+    } else if (command === "ra_logout") {
+      raState.signedIn = false;
+      raState.username = raState.displayName = "";
+      raState.score = raState.scoreSoftcore = 0;
+      raState.game = null;
+    } else if (command === "ra_set_options") {
+      raState.enabled = !!args.enabled;
+      raState.hardcore = !!args.hardcore;
+      raState.encore = !!args.encore;
+    }
+    if (command === "ra_status" || command === "ra_login" || command === "ra_logout" || command === "ra_set_options") {
+      return JSON.parse(JSON.stringify(raState));
+    }
     switch (command) {
       case "app_state":
         return appState();

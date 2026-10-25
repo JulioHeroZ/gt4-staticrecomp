@@ -1,5 +1,6 @@
 #include "achievements.hpp"
 #include "achievements_overlay.hpp"
+#include "achievements_http.hpp"
 
 #include "rc_api_request.h"
 #include "rc_api_runtime.h"
@@ -85,113 +86,6 @@ struct CompletedHttpJob {
     bool badge_ok = false;
 };
 
-struct HttpResult {
-    int status_code = 0;
-    std::string body;
-};
-
-HttpResult perform_winhttp_request(
-    const std::string& url,
-    const std::string& post_data,
-    const std::string& content_type,
-    const std::wstring& user_agent) {
-    HttpResult result{};
-    const std::wstring w_url = utf8_to_wide(url);
-    if (w_url.empty()) return result;
-
-    URL_COMPONENTS url_comp{};
-    url_comp.dwStructSize = sizeof(url_comp);
-    wchar_t host_buf[256]{};
-    wchar_t path_buf[2048]{};
-    url_comp.lpszHostName = host_buf;
-    url_comp.dwHostNameLength = static_cast<DWORD>(std::size(host_buf));
-    url_comp.lpszUrlPath = path_buf;
-    url_comp.dwUrlPathLength = static_cast<DWORD>(std::size(path_buf));
-
-    if (!WinHttpCrackUrl(w_url.c_str(), static_cast<DWORD>(w_url.size()), 0, &url_comp)) {
-        return result;
-    }
-
-    HINTERNET h_session = WinHttpOpen(
-        user_agent.c_str(),
-        WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,
-        WINHTTP_NO_PROXY_NAME,
-        WINHTTP_NO_PROXY_BYPASS,
-        0);
-    if (!h_session) return result;
-
-    WinHttpSetTimeouts(h_session, 8000, 8000, 10000, 15000);
-
-    HINTERNET h_connect = WinHttpConnect(h_session, host_buf, url_comp.nPort, 0);
-    if (!h_connect) {
-        WinHttpCloseHandle(h_session);
-        return result;
-    }
-
-    const bool is_post = !post_data.empty();
-    const DWORD flags = (url_comp.nScheme == INTERNET_SCHEME_HTTPS) ? WINHTTP_FLAG_SECURE : 0;
-    HINTERNET h_request = WinHttpOpenRequest(
-        h_connect,
-        is_post ? L"POST" : L"GET",
-        path_buf,
-        nullptr,
-        WINHTTP_NO_REFERER,
-        WINHTTP_DEFAULT_ACCEPT_TYPES,
-        flags);
-    if (!h_request) {
-        WinHttpCloseHandle(h_connect);
-        WinHttpCloseHandle(h_session);
-        return result;
-    }
-
-    std::wstring headers;
-    if (is_post && !content_type.empty()) {
-        headers = L"Content-Type: " + utf8_to_wide(content_type) + L"\r\n";
-    }
-
-    const BOOL sent = WinHttpSendRequest(
-        h_request,
-        headers.empty() ? WINHTTP_NO_ADDITIONAL_HEADERS : headers.c_str(),
-        headers.empty() ? 0 : static_cast<DWORD>(headers.size()),
-        is_post ? const_cast<char*>(post_data.data()) : WINHTTP_NO_REQUEST_DATA,
-        is_post ? static_cast<DWORD>(post_data.size()) : 0,
-        is_post ? static_cast<DWORD>(post_data.size()) : 0,
-        0);
-
-    if (sent && WinHttpReceiveResponse(h_request, nullptr)) {
-        DWORD status_code = 0;
-        DWORD status_size = sizeof(status_code);
-        if (WinHttpQueryHeaders(
-                h_request,
-                WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
-                WINHTTP_HEADER_NAME_BY_INDEX,
-                &status_code,
-                &status_size,
-                WINHTTP_NO_HEADER_INDEX)) {
-            result.status_code = static_cast<int>(status_code);
-        }
-
-        DWORD avail = 0;
-        while (WinHttpQueryDataAvailable(h_request, &avail) && avail > 0) {
-            const size_t offset = result.body.size();
-            result.body.resize(offset + avail);
-            DWORD read_bytes = 0;
-            if (!WinHttpReadData(h_request, result.body.data() + offset, avail, &read_bytes)) {
-                result.body.resize(offset);
-                break;
-            }
-            result.body.resize(offset + read_bytes);
-        }
-    } else {
-        result.status_code = RC_API_SERVER_RESPONSE_RETRYABLE_CLIENT_ERROR;
-    }
-
-    WinHttpCloseHandle(h_request);
-    WinHttpCloseHandle(h_connect);
-    WinHttpCloseHandle(h_session);
-    return result;
-}
-
 class RuntimeManager {
 public:
     static RuntimeManager& instance() {
@@ -247,9 +141,10 @@ public:
 
         char ua_clause[64]{};
         rc_client_get_user_agent_clause(client_, ua_clause, sizeof(ua_clause));
-        std::string ua = std::string("GT4Recomp/1.2.1 ") + ua_clause;
+        std::string ua = std::string("GT4Recomp/1.2.4 ") + ua_clause;
         user_agent_ = utf8_to_wide(ua);
 
+        transport_.reset();
         stop_worker_.store(false);
         worker_thread_ = std::thread(&RuntimeManager::worker_loop, this);
         active_.store(true);
@@ -321,6 +216,7 @@ public:
             pending_jobs_.clear();
         }
         queue_cv_.notify_all();
+        transport_.cancel();
         if (worker_thread_.joinable()) {
             worker_thread_.join();
         }
@@ -742,7 +638,7 @@ private:
             }
 
             if (job.is_badge) {
-                HttpResult http = perform_winhttp_request(job.url, "", "", user_agent_);
+                HttpResult http = transport_.request(job.url, "", "", user_agent_);
                 bool saved = false;
                 if (http.status_code == 200 && !http.body.empty() && !job.badge_dest_path.empty()) {
                     std::wstring tmp_path = job.badge_dest_path + L".tmp";
@@ -764,7 +660,7 @@ private:
                 std::lock_guard<std::mutex> lock(completed_mutex_);
                 completed_jobs_.push_back(std::move(done));
             } else {
-                HttpResult http = perform_winhttp_request(job.url, job.post_data, job.content_type, user_agent_);
+                HttpResult http = transport_.request(job.url, job.post_data, job.content_type, user_agent_);
                 CompletedHttpJob done;
                 done.is_badge = false;
                 done.http_status = http.status_code;
@@ -800,6 +696,7 @@ private:
         }
     }
 
+    HttpTransport transport_;
     Config cfg_;
     rc_client_t* client_ = nullptr;
     AchievementsOverlay overlay_;
@@ -807,7 +704,7 @@ private:
     size_t ram_size_ = 0;
     const uint8_t* spr_ = nullptr;
     size_t spr_size_ = 0;
-    std::wstring user_agent_ = L"GT4Recomp/1.2.1";
+    std::wstring user_agent_ = L"GT4Recomp/1.2.4";
 
     std::atomic<bool> active_{false};
     std::atomic<bool> stop_worker_{false};

@@ -12,7 +12,7 @@ use gt4l_core::gs_release;
 use gt4l_core::launch;
 use gt4l_core::paths::{self, DataDirs, GAME_EXECUTABLE};
 use gt4l_core::settings;
-use gt4l_core::{Settings, LAUNCHER_VERSION};
+use gt4l_core::{Settings, LAUNCHER_DISPLAY_VERSION};
 use gt4l_disc::setup::{self as disc_setup, Installed};
 use gt4l_platform::game;
 use gt4saves::library::Report;
@@ -760,11 +760,11 @@ pub fn about_info_of(shared: &Shared) -> Result<AboutInfo, String> {
         .map(|installed| installed.version.text())
         .unwrap_or_else(|| "not installed".to_string());
     Ok(AboutInfo {
-        text: model::about_text(LAUNCHER_VERSION),
+        text: model::about_text(LAUNCHER_DISPLAY_VERSION),
         licenses: model::licenses_text().to_string(),
         disc_path: state.disc_path().map(|path| path.display().to_string()).unwrap_or_default(),
-        version: LAUNCHER_VERSION.to_string(),
-        gt4recomp: LAUNCHER_VERSION.to_string(),
+        version: LAUNCHER_DISPLAY_VERSION.to_string(),
+        gt4recomp: LAUNCHER_DISPLAY_VERSION.to_string(),
         gt4gs: renderer,
         game_files: state.dirs.disc_folder().display().to_string(),
         data_folder: state.dirs.root().display().to_string(),
@@ -902,20 +902,45 @@ pub async fn ra_status(shared: State<'_, Shared>) -> Result<RaStatusView, String
 }
 
 pub fn ra_status_of(shared: &Shared) -> Result<RaStatusView, String> {
-    let ra_path = lock(shared).user_dirs.retroachievements_file();
-    let mut cfg = gt4l_core::retroachievements::RaConfig::load(&ra_path);
-    let mut game = None;
-    if cfg.is_signed_in() {
+    ra_status_with(shared, |cfg| {
         let base_url = ra_base_url();
-        if let Ok(session) = gt4l_core::retroachievements::login_with_token(&base_url, &cfg.username, &cfg.token) {
-            cfg.display_name = session.display_name;
-            cfg.score = session.score;
-            cfg.score_softcore = session.score_softcore;
-            let _ = cfg.save(&ra_path);
-        }
-        game = gt4l_core::retroachievements::fetch_game_overview(&base_url, &cfg.username, &cfg.token).ok();
+        let session = gt4l_core::retroachievements::login_with_token(&base_url, &cfg.username, &cfg.token).ok();
+        let game = gt4l_core::retroachievements::fetch_game_overview(&base_url, &cfg.username, &cfg.token).ok();
+        (session, game)
+    })
+}
+
+/// The refresh callback runs without the state lock. Tests can interleave a real logout/options command here.
+pub(crate) fn ra_status_with(
+    shared: &Shared,
+    refresh: impl FnOnce(&gt4l_core::retroachievements::RaConfig) -> (
+        Option<gt4l_core::retroachievements::RaAccountSession>,
+        Option<gt4l_core::retroachievements::RaGameOverview>,
+    ),
+) -> Result<RaStatusView, String> {
+    let (snapshot, revision) = {
+        let state = lock(shared);
+        let cfg = gt4l_core::retroachievements::RaConfig::load(&state.user_dirs.retroachievements_file());
+        (cfg, state.ra_revision)
+    };
+    if !snapshot.is_signed_in() {
+        return Ok(build_ra_status_view(&snapshot, None));
     }
-    Ok(build_ra_status_view(&cfg, game))
+    let (session, game) = refresh(&snapshot);
+    let state = lock(shared);
+    let path = state.user_dirs.retroachievements_file();
+    let mut current = gt4l_core::retroachievements::RaConfig::load(&path);
+    // A refresh may update scores, but may never restore an old account or overwrite newer options.
+    if state.ra_revision != revision || current.username != snapshot.username || current.token != snapshot.token {
+        return Ok(build_ra_status_view(&current, None));
+    }
+    if let Some(session) = session {
+        current.display_name = session.display_name;
+        current.score = session.score;
+        current.score_softcore = session.score_softcore;
+        current.save(&path)?;
+    }
+    Ok(build_ra_status_view(&current, game))
 }
 
 /// Signs in to RetroAchievements with username and password, storing the API token in `retroachievements.toml`.
@@ -928,23 +953,34 @@ pub async fn ra_login(username: String, password: String, shared: State<'_, Shar
 }
 
 pub fn ra_login_of(username: &str, password: &str, shared: &Shared) -> Result<RaStatusView, String> {
+    let revision = {
+        let mut state = lock(shared);
+        state.ra_revision = state.ra_revision.wrapping_add(1);
+        state.ra_revision
+    };
     let base_url = ra_base_url();
     let session = gt4l_core::retroachievements::login_with_password(&base_url, username, password)?;
-    let (ra_path, dirs) = {
+    let (cfg, dirs) = {
         let state = lock(shared);
-        (state.user_dirs.retroachievements_file(), state.dirs.clone())
+        let ra_path = state.user_dirs.retroachievements_file();
+        let mut cfg = gt4l_core::retroachievements::RaConfig::load(&ra_path);
+        if state.ra_revision != revision {
+            return Ok(build_ra_status_view(&cfg, None));
+        }
+        cfg.username = session.username;
+        cfg.display_name = session.display_name;
+        cfg.token = session.token;
+        cfg.score = session.score;
+        cfg.score_softcore = session.score_softcore;
+        cfg.enabled = true;
+        cfg.save(&ra_path)?;
+        (cfg, state.dirs.clone())
     };
-    let mut cfg = gt4l_core::retroachievements::RaConfig::load(&ra_path);
-    cfg.username = session.username;
-    cfg.display_name = session.display_name;
-    cfg.token = session.token;
-    cfg.score = session.score;
-    cfg.score_softcore = session.score_softcore;
-    cfg.enabled = true;
-    cfg.save(&ra_path)?;
     state::log(&dirs, &format!("retroachievements: signed in as {}", cfg.display_name));
     let game = gt4l_core::retroachievements::fetch_game_overview(&base_url, &cfg.username, &cfg.token).ok();
-    Ok(build_ra_status_view(&cfg, game))
+    let state = lock(shared);
+    let current = gt4l_core::retroachievements::RaConfig::load(&state.user_dirs.retroachievements_file());
+    Ok(build_ra_status_view(&current, if state.ra_revision == revision { game } else { None }))
 }
 
 /// Signs out of RetroAchievements and removes the stored API token from `retroachievements.toml`.
@@ -954,14 +990,13 @@ pub fn ra_logout(shared: State<'_, Shared>) -> Result<RaStatusView, String> {
 }
 
 pub fn ra_logout_of(shared: &Shared) -> Result<RaStatusView, String> {
-    let (ra_path, dirs) = {
-        let state = lock(shared);
-        (state.user_dirs.retroachievements_file(), state.dirs.clone())
-    };
+    let mut state = lock(shared);
+    let ra_path = state.user_dirs.retroachievements_file();
     let mut cfg = gt4l_core::retroachievements::RaConfig::load(&ra_path);
     cfg.clear_credentials();
     cfg.save(&ra_path)?;
-    state::log(&dirs, "retroachievements: signed out");
+    state.ra_revision = state.ra_revision.wrapping_add(1);
+    state::log(&state.dirs, "retroachievements: signed out");
     Ok(build_ra_status_view(&cfg, None))
 }
 
@@ -982,12 +1017,14 @@ pub fn ra_set_options_of(
     encore: bool,
     shared: &Shared,
 ) -> Result<RaStatusView, String> {
-    let ra_path = lock(shared).user_dirs.retroachievements_file();
+    let mut state = lock(shared);
+    let ra_path = state.user_dirs.retroachievements_file();
     let mut cfg = gt4l_core::retroachievements::RaConfig::load(&ra_path);
     cfg.enabled = enabled;
     cfg.hardcore = hardcore;
     cfg.encore = encore;
     cfg.save(&ra_path)?;
+    state.ra_revision = state.ra_revision.wrapping_add(1);
     Ok(build_ra_status_view(&cfg, None))
 }
 
