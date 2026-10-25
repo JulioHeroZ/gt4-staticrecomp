@@ -31,7 +31,17 @@
 ; appends one line to data\logs\setup.log.
 
 !ifndef VERSION
-  !define VERSION "1.2.3"
+  !define VERSION "1.2.4"
+!endif
+; /DLABEL=rc1 labels this test build. VERSION and version.json stay numeric for the legacy stable-only updater.
+!ifdef LABEL
+  !if "${LABEL}" == ""
+    !define FULL_VERSION "${VERSION}"
+  !else
+    !define FULL_VERSION "${VERSION}-${LABEL}"
+  !endif
+!else
+  !define FULL_VERSION "${VERSION}"
 !endif
 !ifndef LAUNCHER_EXE
   !error "Define LAUNCHER_EXE=<path to GT4Recomp.exe>"
@@ -46,7 +56,7 @@
   !error "Define WEBVIEW2_BOOTSTRAPPER=<path to MicrosoftEdgeWebview2Setup.exe>"
 !endif
 !ifndef OUTFILE
-  !define OUTFILE "GT4Recomp-Setup-${VERSION}.exe"
+  !define OUTFILE "GT4Recomp-Setup-${FULL_VERSION}.exe"
 !endif
 ; The Evergreen WebView2 Runtime's client id (Microsoft, "Distribute your app and the WebView2 Runtime").
 !define WEBVIEW2_CLIENT "{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"
@@ -68,7 +78,7 @@ InstallDir "$PROGRAMFILES64\${INTERNAL_NAME}"
 RequestExecutionLevel admin
 SetCompressor /SOLID lzma
 ShowInstDetails show
-BrandingText "${APP_NAME} ${VERSION}"
+BrandingText "${APP_NAME} ${FULL_VERSION}"
 
 !include "MUI2.nsh"
 !include "nsDialogs.nsh"
@@ -287,7 +297,7 @@ Function LogSetupResult
   FileOpen $R3 "$INSTDIR\data\logs\setup.log" a
   ${IfNot} ${Errors}
     FileSeek $R3 0 END
-    FileWrite $R3 "setup ${VERSION}: mode $R4, update flag $UpdateRun, result: $SetupResult, timings ms:$SetupTimings$\r$\n"
+    FileWrite $R3 "setup ${FULL_VERSION}: mode $R4, update flag $UpdateRun, result: $SetupResult, timings ms:$SetupTimings$\r$\n"
     StrCpy $SetupTimings ""
     FileClose $R3
   ${EndIf}
@@ -645,7 +655,7 @@ Function LogTimings
   FileOpen $R3 "$INSTDIR\data\logs\setup.log" a
   ${IfNot} ${Errors}
     FileSeek $R3 0 END
-    FileWrite $R3 "setup ${VERSION}: after the launcher start, timings ms:$SetupTimings$\r$\n"
+    FileWrite $R3 "setup ${FULL_VERSION}: after the launcher start, timings ms:$SetupTimings$\r$\n"
     FileClose $R3
   ${EndIf}
 FunctionEnd
@@ -795,7 +805,7 @@ Section "Install" SecInstall
 
   WriteRegStr HKLM "${APP_KEY}" "InstallDir" "$INSTDIR"
   WriteRegStr HKLM "${UNINSTALL_KEY}" "DisplayName" "${APP_NAME}"
-  WriteRegStr HKLM "${UNINSTALL_KEY}" "DisplayVersion" "${VERSION}"
+  WriteRegStr HKLM "${UNINSTALL_KEY}" "DisplayVersion" "${FULL_VERSION}"
   WriteRegStr HKLM "${UNINSTALL_KEY}" "Publisher" "GT4Recomp contributors"
   WriteRegStr HKLM "${UNINSTALL_KEY}" "DisplayIcon" "$INSTDIR\GT4Recomp.exe"
   WriteRegStr HKLM "${UNINSTALL_KEY}" "InstallLocation" "$INSTDIR"

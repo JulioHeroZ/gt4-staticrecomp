@@ -52,6 +52,8 @@ pub struct AppState {
     pub replays_status: String,
     /// True when the controls file was written by a newer launcher: it is kept as it is (never overwritten).
     pub controls_locked: bool,
+    /// Invalidates in-flight RetroAchievements account work after any account/options mutation.
+    pub ra_revision: u64,
 }
 
 pub type Shared = Arc<Mutex<AppState>>;
@@ -178,6 +180,7 @@ impl AppState {
             saves_status: opened.notice.unwrap_or_default(),
             replays_status: String::new(),
             controls_locked,
+            ra_revision: 0,
         })
     }
 

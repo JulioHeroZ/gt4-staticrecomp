@@ -26,5 +26,9 @@ pub use config::ConfigFile;
 pub use settings::{SettingDef, Settings, SETTINGS};
 pub use version::Version;
 
-/// Version shown in the UI and written to receipts. The Cargo package is authoritative (see `versions`).
+/// Numeric version used by the legacy updater and install receipts. The Cargo package is authoritative.
 pub const LAUNCHER_VERSION: &str = env!("CARGO_PKG_VERSION");
+
+/// Human-readable build version; `GT4_RELEASE_LABEL=rc1` adds `-rc1` without changing install/update semantics.
+pub const LAUNCHER_DISPLAY_VERSION: &str = env!("GT4_LAUNCHER_DISPLAY_VERSION");
+pub const RELEASE_LABEL: &str = env!("GT4_RELEASE_LABEL");

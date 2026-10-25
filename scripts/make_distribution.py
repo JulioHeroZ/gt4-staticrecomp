@@ -148,6 +148,7 @@ def assemble(output, assets_root, exe, runtime_manifest, shaders_dir, crt_dir, a
     licenses = {
         'licenses/LICENSE-GT4Recomp.txt': ROOT / 'LICENSE',
         'licenses/LICENSE-ps2-web-recomp.txt': assets_root / 'private/references/ps2-web-recomp/LICENSE',
+        'licenses/LICENSE-rcheevos.txt': ROOT / 'native/third_party/rcheevos/LICENSE',
         'licenses/THIRD_PARTY.md': ROOT / 'native/THIRD_PARTY.md',
     }
     for relative, source in licenses.items():

@@ -127,7 +127,7 @@ PERF_PROFILES = {
     'pcsx2-slice262': ('slice262-pcsx2.json', 'private/slice262-build/build/gt4vulkan.exe'),
     # TASK-092 (release 1.2.3): slice262 plus the MTVU test-switch fixes and null Donor callbacks (the 1.2.2 CoreGS 1.1
     # crash).
-    'pcsx2': ('slice268-pcsx2.json', 'private/slice268-build/build/gt4vulkan.exe'),
+    'pcsx2': ('slice1190-pcsx2.json', 'private/slice1190-ra124-build/build/gt4vulkan.exe'),
     # TASK-080 addendum (slice218): the slice217 build plus the seamless display host code (GT4_OUTPUT_SIZE gives the
     # auto aspect, GT4_MONITOR the monitor, per-monitor DPI awareness).
     'pcsx2-slice218': ('slice218-pcsx2.json', 'private/slice218-build/build/gt4vulkan.exe'),
@@ -183,7 +183,7 @@ VU1_AOT_MANIFESTS = ('slice151-vu1-aot.json', GS_ASYNC_MANIFEST, PACING_MANIFEST
                      'slice212b-pcsx2.json',
                      'slice214-pcsx2.json', 'slice215-pcsx2.json', 'slice217-pcsx2.json', 'slice218-pcsx2.json',
                      'slice240-pcsx2.json', 'slice260-pcsx2.json', 'slice262-pcsx2.json',
-                     'slice268-pcsx2.json')
+                     'slice268-pcsx2.json', 'slice1190-pcsx2.json')
 # Manifests whose binaries contain the VU0 AOT table and accept --vu0-verify.
 VU0_AOT_MANIFESTS = ('slice160-vu0-aot.json', 'slice166-main.json', 'slice169-mtvu-measure.json', 'slice170-mtvu.json',
                      'slice171-mtvu.json', 'slice172-mtvu.json', 'slice178-main.json', 'slice191-pcsx2-stream.json',
@@ -195,7 +195,7 @@ VU0_AOT_MANIFESTS = ('slice160-vu0-aot.json', 'slice166-main.json', 'slice169-mt
                      'slice212b-pcsx2.json',
                      'slice214-pcsx2.json', 'slice215-pcsx2.json', 'slice217-pcsx2.json', 'slice218-pcsx2.json',
                      'slice240-pcsx2.json', 'slice260-pcsx2.json', 'slice262-pcsx2.json',
-                     'slice268-pcsx2.json')
+                     'slice268-pcsx2.json', 'slice1190-pcsx2.json')
 # Host pacing overrides, forwarded unchanged and recorded in run evidence.
 PACING_OVERRIDES = {'GT4_PACING': ('paced', 'audio'),
                     'GT4_PRESENT_MODE': ('fifo', 'mailbox', 'immediate')}

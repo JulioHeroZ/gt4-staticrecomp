@@ -42,6 +42,16 @@ class SceneScheduleTests(unittest.TestCase):
 
 
 class GsIniTests(unittest.TestCase):
+    def test_renderer_write_paths_are_private_to_each_run(self):
+        first = Path('C:/own-runs/first')
+        second = Path('C:/own-runs/second')
+        one = harness.gs_config_for_run(first, 1)
+        two = harness.gs_config_for_run(second, 1)
+        self.assertIn(f'Cache = {first / "gs-cache"}', one)
+        self.assertIn(f'DataRoot = {first / "gs-data"}', one)
+        self.assertNotIn(str(first), two)
+        self.assertNotIn('slice193-', one)
+
     def render(self, dump_lines=''):
         return harness.GS_INI.format(scale=1, cache='C:/cache', data='C:/data', dump_lines=dump_lines)
 

@@ -1546,3 +1546,23 @@ Maintainer launcher acceptance remains pending.
 Owner test: select CoreGS 1.1, restart the launcher with no gt4-gs package, launch a game and confirm
 there is no renderer download; switch back to PCSX2 and confirm its existing setup/update path.
 This changes package management, not rendering fidelity, performance or CoreGS 2.0 readiness.
+
+
+### TASK-119 — RetroAchievements release 1.2.4
+
+Owner decision 2026-10-25: integrate JulioHeroZ's PR #96 on the 1.2.3 code line, preserve authorship,
+fix the reviewed account refresh/logout race, HTTP shutdown delay and missing test coverage, and prepare
+a focused 1.2.4 release before bringing the feature to 1.3.0. Worktree `C:\Antigravity\gt4-wt-119-ra-124`,
+branch `task/119-retroachievements-124`. The original PR commit `d6c9ea0` is preserved by merge.
+
+State: 1.2.4-rc1 draft candidate prepared; implementation and native validation complete (CTest 43/43, Python 641 tests/42 skipped;
+Rust 379 passed/4 ignored; UI focus 114/114, navigation 150/150). Label rebuild and 24-file installer/source identity passed;
+owner real-account gameplay pending. Release stays a draft, never Latest.
+User-approved exception: the legacy launcher remains English-only in 1.2.4, with en-US and pt-BR notes.
+Installer-only legacy packaging; the separate portable edition and multi-game launcher remain in 1.3.0.
+Native inputs are reused unchanged from slice268; new output reservations are slice1190 (build/pin),
+slice1191 (distribution), slice1192 (Cargo target). No owner saves or installation paths may be changed.
+Acceptance: CTest, Python with the exact new build/pin, launcher workspace and UI checks; no credential
+restoration after logout; bounded cancellation of a slow loopback HTTP request; installer/source identity;
+owner real-account login, unlock, overlay and save test. Later 1.3.0 integration must keep RA disabled for
+Spec II until its identity and achievement conditions are independently validated.
