@@ -1555,7 +1555,7 @@ fix the reviewed account refresh/logout race, HTTP shutdown delay and missing te
 a focused 1.2.4 release before bringing the feature to 1.3.0. Worktree `C:\Antigravity\gt4-wt-119-ra-124`,
 branch `task/119-retroachievements-124`. The original PR commit `d6c9ea0` is preserved by merge.
 
-State: completed and approved for final 1.2.4 publication by the owner on 2026-10-25.
+State: completed, owner approved and published as stable 1.2.4 on 2026-10-25. PR #96 and #105 merged.
 CTest 43/43, Python 641 tests/42 skipped, final Rust 379 passed/4 ignored; UI focus 114/114,
 navigation 150/150; final launcher rebuild and all 24 installer/source checks passed.
 Owner authorized final publication; real-account and installer execution remain untested.

@@ -6,7 +6,8 @@ Final launcher and installer rebuilt without a label; CTest 43/43 passed (Python
 42 skipped), final Rust 379 passed/4 ignored, UI focus 114/114 and navigation 150/150.
 All 24 final installer payload files match their sources. Installer SHA256:
 `100192215644918fa1bdd876810efa48f743399354d5c23d9de651b0c4d8be6d`.
-Prepared for v1.2.4 as Latest; rc1 private draft and public 1.3.0-rc5 retained.
+Published [v1.2.4](https://github.com/moesuito/gt4-staticrecomp/releases/tag/v1.2.4) as Latest.
+PR #96 and follow-up #105 merged; release commit ad46df6. Private rc1 and public 1.3.0-rc5 retained.
 Real-account login, online unlocks, gameplay notifications and installer execution were not tested.
 Owner-approved scope: legacy English UI, en-US/pt-BR notes, installer-only distribution.
 Spec II remains unsupported here; RA must stay disabled for it in the later 1.3.0 port.
