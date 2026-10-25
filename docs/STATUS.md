@@ -1,18 +1,16 @@
 # Current Status
-## TASK-119 release 1.2.4-rc1: RetroAchievements candidate (2026-10-25)
+## TASK-119 release 1.2.4: RetroAchievements (2026-10-25)
 
-Owner approved the focused 1.2.4 release plan and PR #96 contribution. Source is isolated on
-`task/119-retroachievements-124` in `C:\Antigravity\gt4-wt-119-ra-124`; the contributor's original
-commit is retained. Account revision guards, cancelable HTTP and native/UI regression fixtures are prepared.
-Native build and CTest 43/43 passed (Python 641 tests, 42 skipped). Rust workspace with rc1 label: 379 passed,
-4 ignored; UI focus 114/114 and navigation 150/150. Candidate-label rebuild passed; installer built and all 24 payload files match their sources.
-Uploaded private draft `v1.2.4-rc1` at candidate commit `126cc30` (never Latest); installer SHA256
-`0ead20c6db8381249e0717890b680109d0f144107557fd346e44b48a688f6a45`.
-Real-account owner gameplay remains pending; nothing is published.
-The owner explicitly kept the legacy English UI for 1.2.4; notes are supplied in en-US and pt-BR.
-Spec II remains unsupported on this line, and RA must stay disabled for Spec II in the later 1.3.0 port.
-See TASK-119 and the daily journal. ai-memory MCP tools were unavailable during preparation.
-
+Owner approved final stable 1.2.4 publication on 2026-10-25. The contributor commit is preserved.
+Final launcher and installer rebuilt without a label; CTest 43/43 passed (Python 641 tests,
+42 skipped), final Rust 379 passed/4 ignored, UI focus 114/114 and navigation 150/150.
+All 24 final installer payload files match their sources. Installer SHA256:
+`100192215644918fa1bdd876810efa48f743399354d5c23d9de651b0c4d8be6d`.
+Prepared for v1.2.4 as Latest; rc1 private draft and public 1.3.0-rc5 retained.
+Real-account login, online unlocks, gameplay notifications and installer execution were not tested.
+Owner-approved scope: legacy English UI, en-US/pt-BR notes, installer-only distribution.
+Spec II remains unsupported here; RA must stay disabled for it in the later 1.3.0 port.
+ai-memory MCP unavailable; see TASK-119 and the daily journal.
 
 ## Release 1.2.3 published (2026-10-22, hotfix: TASK-092, 093, 094, 096)
 

@@ -1555,9 +1555,11 @@ fix the reviewed account refresh/logout race, HTTP shutdown delay and missing te
 a focused 1.2.4 release before bringing the feature to 1.3.0. Worktree `C:\Antigravity\gt4-wt-119-ra-124`,
 branch `task/119-retroachievements-124`. The original PR commit `d6c9ea0` is preserved by merge.
 
-State: 1.2.4-rc1 draft candidate prepared; implementation and native validation complete (CTest 43/43, Python 641 tests/42 skipped;
-Rust 379 passed/4 ignored; UI focus 114/114, navigation 150/150). Label rebuild and 24-file installer/source identity passed;
-owner real-account gameplay pending. Release stays a draft, never Latest.
+State: completed and approved for final 1.2.4 publication by the owner on 2026-10-25.
+CTest 43/43, Python 641 tests/42 skipped, final Rust 379 passed/4 ignored; UI focus 114/114,
+navigation 150/150; final launcher rebuild and all 24 installer/source checks passed.
+Owner authorized final publication; real-account and installer execution remain untested.
+Final asset GT4Recomp-Setup-1.2.4.exe, tag v1.2.4, Latest.
 User-approved exception: the legacy launcher remains English-only in 1.2.4, with en-US and pt-BR notes.
 Installer-only legacy packaging; the separate portable edition and multi-game launcher remain in 1.3.0.
 Native inputs are reused unchanged from slice268; new output reservations are slice1190 (build/pin),
