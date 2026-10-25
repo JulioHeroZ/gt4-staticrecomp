@@ -6,7 +6,7 @@ Owner approved the focused 1.2.4 release plan and PR #96 contribution. Source is
 commit is retained. Account revision guards, cancelable HTTP and native/UI regression fixtures are prepared.
 Native build and CTest 43/43 passed (Python 641 tests, 42 skipped). Rust workspace with rc1 label: 379 passed,
 4 ignored; UI focus 114/114 and navigation 150/150. Candidate-label rebuild passed; installer built and all 24 payload files match their sources.
-Prepared draft tag `v1.2.4-rc1` (never Latest); installer SHA256
+Uploaded private draft `v1.2.4-rc1` at candidate commit `126cc30` (never Latest); installer SHA256
 `0ead20c6db8381249e0717890b680109d0f144107557fd346e44b48a688f6a45`.
 Real-account owner gameplay remains pending; nothing is published.
 The owner explicitly kept the legacy English UI for 1.2.4; notes are supplied in en-US and pt-BR.
