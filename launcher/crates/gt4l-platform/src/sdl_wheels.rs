@@ -67,6 +67,9 @@ pub fn is_candidate_wheel(sdl_is_wheel: bool, sdl_is_gamepad: bool, name: &str) 
         "pedal",
         "shifter",
         "handbrake",
+        "hori",
+        "apex",
+        "overdrive",
     ];
     if KEYWORDS.iter().any(|kw| lower.contains(kw)) {
         return true;
@@ -87,6 +90,7 @@ pub fn select_primary_wheel_device<'a>(
         .iter()
         .find(|d| d.is_wheel)
         .or_else(|| devices.iter().find(|d| !d.is_gamepad))
+        .or_else(|| devices.first())
 }
 
 /// Compares `current` device readings against `baseline` (recorded when the user clicked "Bind")

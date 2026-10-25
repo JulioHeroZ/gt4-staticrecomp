@@ -445,6 +445,15 @@ body.input-pad .info:focus .tip { display: block; }
   flex: 1; min-height: 0; margin-top: 6px;
   display: grid; grid-template-columns: minmax(0, 1fr) clamp(268px, 23vw, 360px); gap: 24px;
 }
+.cx-wheel-body {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column;
+}
+[hidden],
+.cx-body[hidden],
+.cx-wheel-body[hidden] {
+  display: none !important;
+}
 .cx-stage { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .cx-pad { position: relative; flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
 /* A soft spotlight under the pad. */

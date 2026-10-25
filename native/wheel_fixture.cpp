@@ -27,7 +27,7 @@ void require_rejects(std::string_view toml, const char *label) {
 void test_presets_and_roundtrip() {
   using namespace gt4::wheel;
   for (const char *preset :
-       {"generic", "logitech_g29", "logitech_dfgt", "thrustmaster", "fanatec_moza", "combined_pedals"}) {
+       {"generic", "hori", "logitech_g29", "logitech_dfgt", "thrustmaster", "fanatec_moza", "combined_pedals"}) {
     const WheelConfig cfg = preset_wheel_config(preset);
     const std::string text = serialize_wheel_config(cfg);
     const WheelConfig parsed = parse_wheel_config(text, std::string(preset) + ".toml");

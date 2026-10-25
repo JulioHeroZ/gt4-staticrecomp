@@ -31,6 +31,7 @@ pub const BUTTON_SLOTS: &[(&str, &str)] = &[
 
 pub const PRESET_NAMES: &[&str] = &[
     "generic",
+    "hori",
     "logitech_g29",
     "logitech_dfgt",
     "thrustmaster",
@@ -181,6 +182,25 @@ impl WheelConfig {
 
         match name {
             "generic" | "logitech_g29" | "" => {}
+            "hori" => {
+                cfg.steering.rotation_degrees = 270;
+                cfg.steering.effective_degrees = 270;
+                cfg.throttle.source = "axis:5".into();
+                cfg.throttle.mode = "normal".into();
+                cfg.brake.source = "axis:2".into();
+                cfg.brake.mode = "normal".into();
+                cfg.clutch.source.clear();
+                cfg.handbrake.source.clear();
+                cfg.buttons.insert("l1".into(), vec!["btn:4".into()]);
+                cfg.buttons.insert("r1".into(), vec!["btn:5".into()]);
+                cfg.buttons.insert("cross".into(), vec!["btn:0".into()]);
+                cfg.buttons.insert("circle".into(), vec!["btn:1".into()]);
+                cfg.buttons.insert("square".into(), vec!["btn:2".into()]);
+                cfg.buttons.insert("triangle".into(), vec!["btn:3".into()]);
+                cfg.buttons.insert("select".into(), vec!["btn:6".into()]);
+                cfg.buttons.insert("start".into(), vec!["btn:7".into()]);
+                cfg.ffb.enabled = false;
+            }
             "logitech_dfgt" => {
                 cfg.clutch.source.clear();
                 cfg.buttons
@@ -813,6 +833,51 @@ pub fn evaluate_pedal_normalized(cfg: &PedalConfig, raw: i16) -> f64 {
 }
 
 /// Auto-detects the pedal axis polarity mode given its resting raw value and pressed raw value.
+/// Auto-detects the matching wheel preset based on connected device name and axis signature.
+pub fn detect_wheel_preset(device_name: &str, num_axes: usize, axes: Option<&[i16]>) -> &'static str {
+    let lower = device_name.to_ascii_lowercase();
+    if lower.contains("hori") || lower.contains("apex") || lower.contains("overdrive") {
+        return "hori";
+    }
+    if lower.contains("driving force") || lower.contains("dfgt") {
+        return "logitech_dfgt";
+    }
+    if lower.contains("g29")
+        || lower.contains("g920")
+        || lower.contains("g923")
+        || lower.contains("g27")
+        || lower.contains("g25")
+        || lower.contains("logitech")
+    {
+        return "logitech_g29";
+    }
+    if lower.contains("thrustmaster")
+        || lower.contains("t150")
+        || lower.contains("t248")
+        || lower.contains("t300")
+        || lower.contains("t-gt")
+    {
+        return "thrustmaster";
+    }
+    if lower.contains("fanatec")
+        || lower.contains("csl dd")
+        || lower.contains("gt dd")
+        || lower.contains("moza")
+        || lower.contains("simagic")
+    {
+        return "fanatec_moza";
+    }
+    if num_axes >= 6 && (lower.contains("xbox") || lower.contains("xinput")) {
+        if let Some(vals) = axes {
+            if vals.len() >= 6 && vals[2] < -16000 && vals[5] < -16000 {
+                return "hori";
+            }
+        }
+        return "hori";
+    }
+    "generic"
+}
+
 pub fn detect_pedal_axis_mode(rest_raw: i16, pressed_raw: i16) -> &'static str {
     if rest_raw > 16000 && pressed_raw < rest_raw - 8000 {
         "inverted"

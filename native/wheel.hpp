@@ -154,7 +154,7 @@ struct DeviceReading {
   std::vector<std::uint8_t> hats; // SDL_HAT_* bitmask (0x01 up, 0x02 right, 0x04 down, 0x08 left)
 };
 
-// Built-in presets: "generic", "logitech_g29", "logitech_dfgt", "thrustmaster",
+// Built-in presets: "generic", "hori", "logitech_g29", "logitech_dfgt", "thrustmaster",
 // "fanatec_moza", "combined_pedals".
 WheelConfig preset_wheel_config(std::string_view preset_name);
 const WheelConfig &default_wheel_config();

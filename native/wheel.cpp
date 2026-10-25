@@ -520,6 +520,31 @@ WheelConfig preset_wheel_config(std::string_view preset_name) {
     return cfg;
   }
 
+  if (preset_name == "hori") {
+    // HORI Racing Wheel Apex / Overdrive / XInput (270 deg):
+    // Throttle is RT (axis 5, normal mode: -32768 rest to +32767 full)
+    // Brake is LT (axis 2, normal mode: -32768 rest to +32767 full)
+    // No clutch pedal.
+    cfg.steering.rotation_degrees = 270;
+    cfg.steering.effective_degrees = 270;
+    cfg.throttle.source = {SourceKind::axis, {}, 5, HatDirection::up};
+    cfg.throttle.mode = PedalAxisMode::normal;
+    cfg.brake.source = {SourceKind::axis, {}, 2, HatDirection::up};
+    cfg.brake.mode = PedalAxisMode::normal;
+    cfg.clutch.source = {};
+    cfg.handbrake.source = {};
+    cfg.buttons[10] = {{SourceKind::button, {}, 4, HatDirection::up}}; // l1 / paddle down (LB)
+    cfg.buttons[11] = {{SourceKind::button, {}, 5, HatDirection::up}}; // r1 / paddle up (RB)
+    cfg.buttons[4] = {{SourceKind::button, {}, 0, HatDirection::up}};  // cross (A)
+    cfg.buttons[5] = {{SourceKind::button, {}, 1, HatDirection::up}};  // circle (B)
+    cfg.buttons[6] = {{SourceKind::button, {}, 2, HatDirection::up}};  // square (X)
+    cfg.buttons[7] = {{SourceKind::button, {}, 3, HatDirection::up}};  // triangle (Y)
+    cfg.buttons[8] = {{SourceKind::button, {}, 6, HatDirection::up}};  // select (Back)
+    cfg.buttons[9] = {{SourceKind::button, {}, 7, HatDirection::up}};  // start (Start)
+    cfg.ffb.enabled = false;
+    return cfg;
+  }
+
   if (preset_name == "logitech_dfgt") {
     cfg.clutch.source = {};
     // Driving Force GT / Pro: paddles are buttons 4/5 and sequential stick is 12/13.
@@ -913,10 +938,11 @@ bool is_candidate_wheel_device(bool sdl_is_wheel_type, bool sdl_is_gamepad, std:
   if (sdl_is_wheel_type)
     return true;
   const std::string lower = to_lower_ascii(device_name);
-  constexpr std::array<std::string_view, 18> kWheelKeywords{{
+  constexpr std::array<std::string_view, 24> kWheelKeywords{{
       "wheel",      "driving force", "g29",      "g920",     "g923",       "g27",
       "g25",        "thrustmaster",  "t150",     "t248",     "t300",       "t500",
       "t-gt",       "fanatec",       "moza",     "simagic",  "cammus",     "simucube",
+      "hori",       "apex",          "overdrive","pedal",    "shifter",    "handbrake",
   }};
   for (std::string_view kw : kWheelKeywords) {
     if (lower.find(kw) != std::string::npos)
@@ -945,6 +971,12 @@ int select_primary_device(const WheelConfig &config, const std::vector<DeviceRea
   for (std::size_t i = 0; i < devices.size(); ++i) {
     if (is_candidate_wheel_device(devices[i].is_wheel, devices[i].is_gamepad, devices[i].name))
       return static_cast<int>(i);
+  }
+  if (config.preset == "hori") {
+    for (std::size_t i = 0; i < devices.size(); ++i) {
+      if (devices[i].axes.size() >= 6)
+        return static_cast<int>(i);
+    }
   }
   return -1;
 }
