@@ -50,7 +50,7 @@ const char *backend_name(Backend backend);
 // Negates an SDL/XInput stick axis (SDL: down is positive; XInput: up is positive). -32768 maps to 32767.
 std::int16_t negate_axis(std::int16_t value);
 // SDL trigger axis (0..32767) to the XInput byte (0..255).
-std::uint8_t trigger_byte(std::int32_t sdl_value);
+std::uint8_t trigger_byte(std::int32_t sdl_value, bool full_range = false);
 
 // The pad that player 1 uses: the lowest instance id among the connected pads. Returns false when none is connected;
 // otherwise `instance` receives that id.

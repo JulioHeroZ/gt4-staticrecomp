@@ -90,6 +90,11 @@ impl SdlPads {
         let pad = self.open.get(&id)?;
         let button = |which: Button| pad.button(which);
         let axis = |which: Axis| pad.axis(which);
+        let is_ps5 = pad.r#type().string() == "ps5"
+            || pad.name().map_or(false, |name| {
+                let lower = name.to_lowercase();
+                lower.contains("dualsense") || lower.contains("ps5")
+            });
         Some(RawPad {
             south: button(Button::South),
             east: button(Button::East),
@@ -111,6 +116,7 @@ impl SdlPads {
             left_y: axis(Axis::LeftY),
             right_x: axis(Axis::RightX),
             right_y: axis(Axis::RightY),
+            is_ps5,
         })
     }
 }

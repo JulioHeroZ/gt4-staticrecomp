@@ -107,6 +107,11 @@ void check_sdl_conversions() {
   require(trigger_byte(32767) == 255, "full trigger is byte 255");
   require(trigger_byte(16384) == 128, "half trigger is byte 128");
   require(trigger_byte(40000) == 255, "an out-of-range trigger clamps to 255");
+  require(trigger_byte(-32768, true) == 0, "full-range trigger rest is 0");
+  require(trigger_byte(-40000, true) == 0, "full-range negative clamp is 0");
+  require(trigger_byte(0, true) == 128, "full-range trigger midpoint is 128");
+  require(trigger_byte(32767, true) == 255, "full-range trigger full is 255");
+  require(trigger_byte(40000, true) == 255, "full-range clamp to 255");
   std::fprintf(stderr, "PASS: SDL axis and trigger conversions\n");
 }
 

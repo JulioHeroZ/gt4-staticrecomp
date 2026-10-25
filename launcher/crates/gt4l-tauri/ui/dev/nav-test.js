@@ -228,6 +228,10 @@
   same("trigger output: at the deadzone it is 0", CM.triggerOutput(30 / 255, 30 / 255, "linear"), 0);
   same("trigger output: the integer formula of native/controls.cpp", CM.triggerOutput(128 / 255, 30 / 255, "linear"), Math.floor((98 * 255) / 225) / 255);
   same("trigger output: cubic at half travel", Math.round(CM.triggerOutput(0.5, 0, "cubic") * 1000), 125);
+  same("trigger output: s-curve at half travel", Math.round(CM.triggerOutput(0.5, 0, "s_curve") * 1000), 500);
+  same("trigger output: smooth power at half travel", Math.round(CM.triggerOutput(0.5, 0, "smooth_power") * 1000), Math.round(0.5 * Math.sqrt(0.5) * 1000));
+  same("trigger output: sublinear at half travel", Math.round(CM.triggerOutput(0.5, 0, "sublinear") * 1000), Math.round(Math.sqrt(0.5) * 1000));
+  same("trigger output: logarithmic at half travel", Math.round(CM.triggerOutput(0.5, 0, "logarithmic") * 1000), Math.round((Math.log(1 + 4.5) / Math.log(10)) * 1000));
 
   same("KeyZ is Z", CM.keyFromEvent({ code: "KeyZ", key: "z" }), { name: "Z" });
   same("Digit1 is 1", CM.keyFromEvent({ code: "Digit1", key: "1" }), { name: "1" });

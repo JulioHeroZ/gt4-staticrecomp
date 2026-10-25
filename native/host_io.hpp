@@ -59,6 +59,8 @@ private:
   ULONGLONG sdl_next_scan_ = 0;
   ULONGLONG rumble_sent_at_ = 0;
   bool sdl_initialized_ = false;
+  bool is_dualsense_ = false;
+  bool seen_negative_trigger_ = false;
   std::uint16_t motors_ = 0;
 };
 

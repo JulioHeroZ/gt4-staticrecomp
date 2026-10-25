@@ -1546,3 +1546,9 @@ Maintainer launcher acceptance remains pending.
 Owner test: select CoreGS 1.1, restart the launcher with no gt4-gs package, launch a game and confirm
 there is no renderer download; switch back to PCSX2 and confirm its existing setup/update path.
 This changes package management, not rendering fidelity, performance or CoreGS 2.0 readiness.
+
+### TASK-104 — DualSense trigger range and advanced trigger curves
+Branch 	ask/104-dualsense-curves. Added DualSense signed-axis full range normalization (-32768..32767 to 0..255)
+alongside standard 0..32767 XInput triggers. Added trigger mode option (uto, standard, dualsense)
+and expanded trigger curves to include s_curve (Smoothstep: 3x^2 - 2x^3), smooth_power (x^1.5), sublinear (sqrt(x)),
+and logarithmic (ln(1 + 9x)/ln(10)), supported across native controls, pad mapping, Rust launcher, and UI.

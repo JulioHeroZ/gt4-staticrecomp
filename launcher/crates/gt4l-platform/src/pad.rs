@@ -47,6 +47,7 @@ pub struct RawPad {
     pub left_y: i16,
     pub right_x: i16,
     pub right_y: i16,
+    pub is_ps5: bool,
 }
 
 /// The mapped pad: the pressure of each controls-file source (digital 0 or 255, triggers 0..=255) and the raw
@@ -81,11 +82,22 @@ const CAPTURE_ORDER: &[&str] = &[
 ];
 
 /// Maps one SDL reading to controls-file sources (the table in the module comment).
+/// Converts an SDL trigger reading (0..=32767, or -32768..=32767 on DualSense/signed axes) to a 0..=255 byte.
+pub fn trigger_byte(value: i16, is_ps5: bool) -> u8 {
+    if is_ps5 || value < -1000 {
+        let clamped = i32::from(value).clamp(-32_768, 32_767);
+        let shifted = clamped + 32_768; // 0..=65535
+        ((shifted * 255 + 32_767) / 65_535) as u8
+    } else {
+        let clamped = i32::from(value).clamp(0, 32_767);
+        ((clamped * 255 + 16_383) / 32_767) as u8
+    }
+}
+
 pub fn sample(raw: &RawPad) -> PadSample {
     let digital = |on: bool| if on { 255u8 } else { 0u8 };
     let trigger = |value: i16| -> u8 {
-        let clamped = i32::from(value).clamp(0, 32_767);
-        ((clamped * 255 + 16_383) / 32_767) as u8
+        trigger_byte(value, raw.is_ps5)
     };
     let pairs: [(&'static str, u8); 16] = [
         ("xinput:A", digital(raw.south)),

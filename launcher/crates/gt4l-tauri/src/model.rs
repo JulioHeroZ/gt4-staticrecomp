@@ -80,7 +80,7 @@ fn fill_resolution_row(row: &mut Value, settings: &Settings, monitors: &[Monitor
     }
 }
 
-/// The Render scale slider's readout per step: "100% · 4x · 2560x1792" for the output size the game would use now
+/// The Render scale slider's readout per step: "100% Ã‚Â· 4x Ã‚Â· 2560x1792" for the output size the game would use now
 /// (1920 x 1080 when no monitor is known).
 fn fill_render_scale_row(row: &mut Value, settings: &Settings, monitors: &[Monitor]) {
     let output = display::resolve_target(monitors, settings.get("monitor"), settings.get("resolution"))
@@ -115,6 +115,7 @@ pub fn settings_table_with_monitors(settings: &Settings, controls: &Controls, mo
     for trigger in ["l2", "r2"] {
         rows.push(trigger_row(trigger, controls, "deadzone"));
         rows.push(trigger_row(trigger, controls, "curve"));
+        rows.push(trigger_row(trigger, controls, "mode"));
     }
     for stick in [Stick::Left, Stick::Right] {
         rows.push(stick_row(stick, controls));
@@ -254,7 +255,11 @@ fn gs_row(row: &gs_table::Row, settings: &Settings) -> Value {
 
 fn trigger_row(trigger: &str, controls: &Controls, field: &str) -> Value {
     let tuning = controls.trigger_tuning(trigger);
-    let label = if field == "deadzone" { "deadzone" } else { "curve" };
+    let label = match field {
+        "deadzone" => "deadzone",
+        "mode" => "mode",
+        _ => "curve",
+    };
     let title = format!("{} {}", trigger.to_uppercase(), label);
     if field == "deadzone" {
         json!({
@@ -269,19 +274,38 @@ fn trigger_row(trigger: &str, controls: &Controls, field: &str) -> Value {
             "default": percent(gt4controls::TRIGGER_DEFAULT_DEADZONE),
             "current": percent(tuning.deadzone),
         })
+    } else if field == "mode" {
+        json!({
+            "id": format!("{trigger}_mode"),
+            "label": title,
+            "help": "Trigger axis range: Auto detects DualSense / signed axes; Standard uses Xbox 0..32767; DualSense forces full-range -32768..32767.",
+            "page": "basic",
+            "group": "controls",
+            "control": "dropdown",
+            "values": [
+                { "value": "auto", "label": "Auto" },
+                { "value": "standard", "label": "Standard" },
+                { "value": "dualsense", "label": "DualSense" },
+            ],
+            "default": "auto",
+            "current": tuning.mode.as_str(),
+        })
     } else {
         json!({
             "id": format!("{trigger}_curve"),
             "label": title,
-            "help": "How the pressure grows with the trigger travel. Linear follows the trigger; quadratic and cubic \
-                     give finer control at light pressure.",
+            "help": "How the pressure grows with the trigger travel. Linear follows the trigger; S-Curve provides smooth ends and linear middle; Quadratic and Cubic give finer control at light pressure.",
             "page": "basic",
             "group": "controls",
             "control": "dropdown",
             "values": [
                 { "value": "linear", "label": "Linear" },
+                { "value": "s_curve", "label": "S-Curve" },
+                { "value": "smooth_power", "label": "Smooth Power (x^1.5)" },
                 { "value": "quadratic", "label": "Quadratic" },
                 { "value": "cubic", "label": "Cubic" },
+                { "value": "sublinear", "label": "Sublinear (sqrt)" },
+                { "value": "logarithmic", "label": "Logarithmic" },
             ],
             "default": "linear",
             "current": tuning.curve.as_str(),
@@ -492,8 +516,10 @@ pub struct TriggerDto {
     pub id: String,
     /// Deadzone in percent of travel, 0-100.
     pub deadzone: f32,
-    /// `linear`, `quadratic` or `cubic`.
+    /// Curve name.
     pub curve: String,
+    /// Mode name.
+    pub mode: String,
 }
 
 pub fn trigger_rows(controls: &Controls) -> Vec<TriggerDto> {
@@ -505,6 +531,7 @@ pub fn trigger_rows(controls: &Controls) -> Vec<TriggerDto> {
                 id: id.to_string(),
                 deadzone: (tuning.deadzone * 100.0 * 10.0).round() / 10.0,
                 curve: tuning.curve.as_str().to_string(),
+                mode: tuning.mode.as_str().to_string(),
             }
         })
         .collect()
@@ -516,17 +543,32 @@ pub fn curve_from_name(name: &str) -> Option<Curve> {
         "linear" => Some(Curve::Linear),
         "quadratic" => Some(Curve::Quadratic),
         "cubic" => Some(Curve::Cubic),
+        "s_curve" | "scurve" | "s-curve" => Some(Curve::SCurve),
+        "smooth_power" | "smooth" => Some(Curve::SmoothPower),
+        "sublinear" | "root" => Some(Curve::Sublinear),
+        "logarithmic" | "log" => Some(Curve::Logarithmic),
         _ => None,
     }
 }
 
-/// Trigger tuning from a percentage and a curve name. Percentages outside 0-100 are refused.
-pub fn trigger_tuning(deadzone_percent: f32, curve: &str) -> Result<TriggerTuning, String> {
+/// Parses the trigger mode name the page sends.
+pub fn mode_from_name(name: &str) -> Option<gt4controls::TriggerMode> {
+    match name {
+        "auto" => Some(gt4controls::TriggerMode::Auto),
+        "standard" => Some(gt4controls::TriggerMode::Standard),
+        "dualsense" => Some(gt4controls::TriggerMode::DualSense),
+        _ => None,
+    }
+}
+
+/// Trigger tuning from a percentage, curve name and mode name.
+pub fn trigger_tuning(deadzone_percent: f32, curve: &str, mode: &str) -> Result<TriggerTuning, String> {
     if !(0.0..=100.0).contains(&deadzone_percent) {
         return Err("the deadzone must be between 0 and 100 percent".into());
     }
     let curve = curve_from_name(curve).ok_or_else(|| format!("unknown curve '{curve}'"))?;
-    Ok(TriggerTuning { deadzone: deadzone_percent / 100.0, curve })
+    let mode = mode_from_name(mode).ok_or_else(|| format!("unknown mode '{mode}'"))?;
+    Ok(TriggerTuning { deadzone: deadzone_percent / 100.0, curve, mode })
 }
 
 /// Whether an input is one the page may rebind (the digital inputs of the controls file).
@@ -586,15 +628,18 @@ mod tests {
 
     #[test]
     fn trigger_tuning_checks_the_percentage_and_the_curve() {
-        assert!(trigger_tuning(-1.0, "linear").is_err());
-        assert!(trigger_tuning(101.0, "linear").is_err());
-        assert!(trigger_tuning(10.0, "exponential").is_err());
-        let tuning = trigger_tuning(20.0, "cubic").unwrap();
+        assert!(trigger_tuning(-1.0, "linear", "auto").is_err());
+        assert!(trigger_tuning(101.0, "linear", "auto").is_err());
+        assert!(trigger_tuning(10.0, "exponential", "auto").is_err());
+        assert!(trigger_tuning(10.0, "linear", "unknown_mode").is_err());
+        let tuning = trigger_tuning(20.0, "cubic", "dualsense").unwrap();
         assert!((tuning.deadzone - 0.2).abs() < 1e-6);
         assert_eq!(tuning.curve, Curve::Cubic);
+        assert_eq!(tuning.mode, gt4controls::TriggerMode::DualSense);
         let rows = trigger_rows(&Controls::default());
         assert_eq!(rows[0].id, "l2");
         assert!((rows[0].deadzone - 11.8).abs() < 0.05, "default 30 of 255 is 11.8 percent");
+        assert_eq!(rows[0].mode, "auto");
     }
 
     #[test]
@@ -822,7 +867,7 @@ mod table_tests {
         let circle = buttons.iter().find(|button| button["id"] == "circle").unwrap();
         assert_eq!(circle["xinput"], "A", "swapped");
         let analog: Vec<&str> = view["triggers"].as_array().unwrap().iter().map(|row| row["id"].as_str().unwrap()).collect();
-        assert_eq!(analog, ["l2_deadzone", "l2_curve", "r2_deadzone", "r2_curve", "lstick_deadzone", "rstick_deadzone"]);
+        assert_eq!(analog, ["l2_deadzone", "l2_curve", "l2_mode", "r2_deadzone", "r2_curve", "r2_mode", "lstick_deadzone", "rstick_deadzone"]);
         assert_eq!(view["locked"], false);
         assert_eq!(stick_setting("rstick_deadzone"), Some(Stick::Right));
         assert_eq!(stick_setting("l2_deadzone"), None);

@@ -96,6 +96,8 @@ void ControllerInput::close_sdl_pad() {
   if (sdl_pad_) {
     SDL_CloseGamepad(sdl_pad_);
     sdl_pad_ = nullptr;
+    is_dualsense_ = false;
+    seen_negative_trigger_ = false;
   }
 }
 
@@ -167,6 +169,11 @@ PadState ControllerInput::poll_sdl(bool focused) {
         const char *name = SDL_GetGamepadName(sdl_pad_);
         std::fprintf(stderr, "[input] SDL gamepad \"%s\" is controller 1 of %d\n",
                      name ? name : "unnamed", count);
+        SDL_GamepadType type = SDL_GetGamepadType(sdl_pad_);
+        std::string lower_name = name ? name : "";
+        for (char &c : lower_name) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        is_dualsense_ = (type == SDL_GAMEPAD_TYPE_PS5) || (lower_name.find("dualsense") != std::string::npos) || (lower_name.find("ps5") != std::string::npos);
+        seen_negative_trigger_ = false;
       }
     }
     SDL_free(ids);
@@ -199,8 +206,20 @@ PadState ControllerInput::poll_sdl(bool focused) {
   for (const auto &entry : buttons)
     if (SDL_GetGamepadButton(sdl_pad_, entry.button))
       reading.buttons |= entry.mask;
-  reading.left_trigger = gt4::pad::trigger_byte(SDL_GetGamepadAxis(sdl_pad_, SDL_GAMEPAD_AXIS_LEFT_TRIGGER));
-  reading.right_trigger = gt4::pad::trigger_byte(SDL_GetGamepadAxis(sdl_pad_, SDL_GAMEPAD_AXIS_RIGHT_TRIGGER));
+    const auto l_val = SDL_GetGamepadAxis(sdl_pad_, SDL_GAMEPAD_AXIS_LEFT_TRIGGER);
+  const auto r_val = SDL_GetGamepadAxis(sdl_pad_, SDL_GAMEPAD_AXIS_RIGHT_TRIGGER);
+  if (l_val < -1000 || r_val < -1000) {
+    seen_negative_trigger_ = true;
+  }
+  const auto l_mode = gt4::controls::input_trigger_mode(map_, "l2");
+  const auto r_mode = gt4::controls::input_trigger_mode(map_, "r2");
+  auto resolve_full_range = [this](gt4::controls::TriggerMode mode, std::int16_t axis_val) {
+    if (mode == gt4::controls::TriggerMode::dualsense) return true;
+    if (mode == gt4::controls::TriggerMode::standard) return false;
+    return is_dualsense_ || seen_negative_trigger_ || axis_val < -1000;
+  };
+  reading.left_trigger = gt4::pad::trigger_byte(l_val, resolve_full_range(l_mode, l_val));
+  reading.right_trigger = gt4::pad::trigger_byte(r_val, resolve_full_range(r_mode, r_val));
   reading.thumb_lx = SDL_GetGamepadAxis(sdl_pad_, SDL_GAMEPAD_AXIS_LEFTX);
   reading.thumb_ly = gt4::pad::negate_axis(SDL_GetGamepadAxis(sdl_pad_, SDL_GAMEPAD_AXIS_LEFTY));
   reading.thumb_rx = SDL_GetGamepadAxis(sdl_pad_, SDL_GAMEPAD_AXIS_RIGHTX);

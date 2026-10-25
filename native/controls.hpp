@@ -61,7 +61,21 @@ enum class SourceKind : std::uint8_t {
   keyboard, // Win32 virtual key; digital, full pressure
 };
 
-enum class Curve : std::uint8_t { linear, quadratic, cubic };
+enum class Curve : std::uint8_t {
+  linear,
+  quadratic,
+  cubic,
+  s_curve,
+  smooth_power,
+  sublinear,
+  logarithmic,
+};
+
+enum class TriggerMode : std::uint8_t {
+  auto_detect,
+  standard,
+  dualsense,
+};
 
 struct Binding {
   SourceKind kind = SourceKind::keyboard;
@@ -72,6 +86,7 @@ struct Binding {
   double scale = 1.0; // 0 <= scale <= 2, applied after the curve, clamped to full travel
   bool invert = false; // axes only
   Curve curve = Curve::linear;
+  TriggerMode mode = TriggerMode::auto_detect;
 };
 
 struct ControlMap {
@@ -113,6 +128,9 @@ struct TriggerReading {
 
 // Reads an XInput trigger (0..255) through one binding.
 TriggerReading read_trigger(const Binding &binding, std::uint8_t raw);
+
+// Trigger mode for an input ("l2", "r2"), default auto_detect.
+TriggerMode input_trigger_mode(const ControlMap &map, std::string_view input_name);
 
 // Reads an XInput stick axis (-32768..32767) through one binding; returns the PS2
 // byte, 128 at rest.

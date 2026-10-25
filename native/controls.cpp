@@ -75,6 +75,14 @@ double shape(double value, Curve curve) {
     return value * value;
   case Curve::cubic:
     return value * value * value;
+  case Curve::s_curve:
+    return value * value * (3.0 - 2.0 * value);
+  case Curve::smooth_power:
+    return value * std::sqrt(value);
+  case Curve::sublinear:
+    return std::sqrt(value);
+  case Curve::logarithmic:
+    return std::log(1.0 + 9.0 * value) / std::log(10.0);
   case Curve::linear:
   default:
     return value;
@@ -263,8 +271,28 @@ Binding parse_source(std::string_view text, const InputInfo &input, const std::s
         binding.curve = Curve::quadratic;
       else if (curve == "cubic")
         binding.curve = Curve::cubic;
+      else if (curve == "s_curve" || curve == "scurve" || curve == "s-curve")
+        binding.curve = Curve::s_curve;
+      else if (curve == "smooth_power" || curve == "smooth" || curve == "power15")
+        binding.curve = Curve::smooth_power;
+      else if (curve == "sublinear" || curve == "root" || curve == "sqrt")
+        binding.curve = Curve::sublinear;
+      else if (curve == "logarithmic" || curve == "log")
+        binding.curve = Curve::logarithmic;
       else
-        fail(source, line, "curve must be linear, quadratic or cubic");
+        fail(source, line, "unknown curve '" + value + "'");
+    } else if (option == "mode") {
+      if (binding.kind != SourceKind::xinput_trigger)
+        fail(source, line, "mode applies to triggers only");
+      const std::string mode = lower(value);
+      if (mode == "auto" || mode == "auto_detect")
+        binding.mode = TriggerMode::auto_detect;
+      else if (mode == "standard")
+        binding.mode = TriggerMode::standard;
+      else if (mode == "dualsense" || mode == "ps5" || mode == "full_range")
+        binding.mode = TriggerMode::dualsense;
+      else
+        fail(source, line, "unknown trigger mode '" + value + "' (must be auto, standard or dualsense)");
     } else if (option == "invert") {
       if (binding.kind != SourceKind::xinput_axis)
         fail(source, line, "invert applies to stick axes only");
@@ -531,6 +559,18 @@ std::uint8_t read_axis(const Binding &binding, std::int16_t raw) {
     steps = static_cast<int>(std::floor(shaped * (negative ? 128.0 : 127.0)));
   }
   return static_cast<std::uint8_t>(negative ? 128 - steps : 128 + steps);
+}
+
+TriggerMode input_trigger_mode(const ControlMap &map, std::string_view input_name) {
+  const std::size_t index = input_index(input_name);
+  if (index < input_count) {
+    for (const auto &binding : map.bindings[index]) {
+      if (binding.kind == SourceKind::xinput_trigger) {
+        return binding.mode;
+      }
+    }
+  }
+  return TriggerMode::auto_detect;
 }
 
 } // namespace gt4::controls

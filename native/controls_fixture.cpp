@@ -168,6 +168,21 @@ void check_trigger_readings() {
   const auto middle = read_trigger(quadratic, 142).pressure;
   require(middle >= 62 && middle <= 64, "quadratic curve: half travel near quarter pressure");
 
+  // S-Curve, smooth power, sublinear and logarithmic curves
+  const Binding scurve = only_binding(
+      parse_text("schema = 1\n[bindings]\nl2 = [\"xinput:LT | curve=s_curve\"]\n"), "l2");
+  const auto scurve_mid = read_trigger(scurve, 142).pressure;
+  require(scurve_mid >= 125 && scurve_mid <= 128, "s-curve at half travel is near half pressure");
+
+  const Binding sublinear = only_binding(
+      parse_text("schema = 1\n[bindings]\nl2 = [\"xinput:LT | curve=sublinear\"]\n"), "l2");
+  const auto sublinear_mid = read_trigger(sublinear, 142).pressure;
+  require(sublinear_mid >= 175 && sublinear_mid <= 185, "sublinear curve at half travel is near 70% pressure");
+
+  const Binding mode_ds = only_binding(
+      parse_text("schema = 1\n[bindings]\nl2 = [\"xinput:LT | mode=dualsense\"]\n"), "l2");
+  require(mode_ds.mode == TriggerMode::dualsense, "mode option parses dualsense");
+
   // Scale 0.5 halves full travel; scale 2 is clamped at full pressure.
   const Binding half_scale = only_binding(
       parse_text("schema = 1\n[bindings]\nr2 = [\"xinput:RT | scale=0.5\"]\n"), "r2");

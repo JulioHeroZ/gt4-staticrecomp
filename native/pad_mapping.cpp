@@ -75,7 +75,12 @@ std::int16_t negate_axis(std::int16_t value) {
   return value == -32768 ? static_cast<std::int16_t>(32767) : static_cast<std::int16_t>(-value);
 }
 
-std::uint8_t trigger_byte(std::int32_t sdl_value) {
+std::uint8_t trigger_byte(std::int32_t sdl_value, bool full_range) {
+  if (full_range) {
+    const std::int32_t clamped = std::clamp<std::int32_t>(sdl_value, -32768, 32767);
+    const std::int32_t shifted = clamped + 32768;
+    return static_cast<std::uint8_t>((shifted * 255 + 32767) / 65535);
+  }
   const std::int32_t clamped = std::clamp<std::int32_t>(sdl_value, 0, 32767);
   return static_cast<std::uint8_t>(clamped >> 7);
 }

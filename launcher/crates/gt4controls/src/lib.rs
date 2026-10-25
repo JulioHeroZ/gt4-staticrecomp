@@ -96,11 +96,16 @@ fn error(line: usize, message: impl Into<String>) -> ControlsError {
 }
 
 /// Curve of the trigger pressure.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum Curve {
+    #[default]
     Linear,
     Quadratic,
     Cubic,
+    SCurve,
+    SmoothPower,
+    Sublinear,
+    Logarithmic,
 }
 
 impl Curve {
@@ -109,6 +114,29 @@ impl Curve {
             Curve::Linear => "linear",
             Curve::Quadratic => "quadratic",
             Curve::Cubic => "cubic",
+            Curve::SCurve => "s_curve",
+            Curve::SmoothPower => "smooth_power",
+            Curve::Sublinear => "sublinear",
+            Curve::Logarithmic => "logarithmic",
+        }
+    }
+}
+
+/// Trigger axis mode: Auto detects DualSense / signed axes; Standard uses 0..32767; DualSense forces -32768..32767.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum TriggerMode {
+    #[default]
+    Auto,
+    Standard,
+    DualSense,
+}
+
+impl TriggerMode {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            TriggerMode::Auto => "auto",
+            TriggerMode::Standard => "standard",
+            TriggerMode::DualSense => "dualsense",
         }
     }
 }
@@ -118,6 +146,7 @@ impl Curve {
 pub struct TriggerTuning {
     pub deadzone: f32,
     pub curve: Curve,
+    pub mode: TriggerMode,
 }
 
 /// Default trigger deadzone: 30 of 255 raw units.
@@ -214,7 +243,11 @@ impl Controls {
 
     /// Trigger tuning of an input, read from its analog trigger source (`xinput:LT` or `xinput:RT`).
     pub fn trigger_tuning(&self, input: &str) -> TriggerTuning {
-        let mut tuning = TriggerTuning { deadzone: TRIGGER_DEFAULT_DEADZONE, curve: Curve::Linear };
+        let mut tuning = TriggerTuning {
+            deadzone: TRIGGER_DEFAULT_DEADZONE,
+            curve: Curve::Linear,
+            mode: TriggerMode::Auto,
+        };
         let source = self.sources(input).and_then(|sources| {
             sources.iter().find(|source| source.starts_with("xinput:LT") || source.starts_with("xinput:RT"))
         });
@@ -229,6 +262,13 @@ impl Controls {
                 match option {
                     "curve=quadratic" => tuning.curve = Curve::Quadratic,
                     "curve=cubic" => tuning.curve = Curve::Cubic,
+                    "curve=s_curve" | "curve=scurve" | "curve=s-curve" => tuning.curve = Curve::SCurve,
+                    "curve=smooth_power" | "curve=smooth" => tuning.curve = Curve::SmoothPower,
+                    "curve=sublinear" | "curve=root" => tuning.curve = Curve::Sublinear,
+                    "curve=logarithmic" | "curve=log" => tuning.curve = Curve::Logarithmic,
+                    "mode=auto" => tuning.mode = TriggerMode::Auto,
+                    "mode=standard" => tuning.mode = TriggerMode::Standard,
+                    "mode=dualsense" => tuning.mode = TriggerMode::DualSense,
                     _ => {}
                 }
             }
@@ -240,7 +280,11 @@ impl Controls {
     pub fn set_trigger_tuning(&mut self, input: &str, tuning: TriggerTuning) -> Result<(), ControlsError> {
         let current: Vec<String> = self.sources(input).map(|sources| sources.to_vec()).unwrap_or_default();
         let deadzone = tuning.deadzone.clamp(0.0, 0.95);
-        let options = format!("deadzone={deadzone:.3} curve={}", tuning.curve.as_str());
+        let options = if tuning.mode == TriggerMode::Auto {
+            format!("deadzone={deadzone:.3} curve={}", tuning.curve.as_str())
+        } else {
+            format!("deadzone={deadzone:.3} curve={} mode={}", tuning.curve.as_str(), tuning.mode.as_str())
+        };
         let updated: Vec<String> = current
             .into_iter()
             .map(|source| {
@@ -598,8 +642,16 @@ fn validate_option(line: usize, kind: InputKind, analog: bool, option: &str) -> 
             if !analog {
                 return Err(error(line, "curve applies to triggers and sticks only"));
             }
-            if !["linear", "quadratic", "cubic"].contains(&value) {
-                return Err(error(line, "curve must be linear, quadratic or cubic"));
+            if !["linear", "quadratic", "cubic", "s_curve", "scurve", "s-curve", "smooth_power", "smooth", "sublinear", "root", "logarithmic", "log"].contains(&value) {
+                return Err(error(line, "curve must be linear, quadratic, cubic, s_curve, smooth_power, sublinear or logarithmic"));
+            }
+        }
+        "mode" => {
+            if !analog {
+                return Err(error(line, "mode applies to triggers only"));
+            }
+            if !["auto", "standard", "dualsense"].contains(&value) {
+                return Err(error(line, "mode must be auto, standard or dualsense"));
             }
         }
         "invert" => {
@@ -703,6 +755,14 @@ mod tests {
         let text = controls.render();
         assert!(text.contains("l2 = [\"xinput:LT | deadzone=0.050 curve=quadratic\", \"key:F\"]"));
         assert!(Controls::parse(&text).is_ok());
+
+        controls.set_trigger_tuning("r2", TriggerTuning { deadzone: 0.10, curve: Curve::SCurve, mode: TriggerMode::DualSense }).unwrap();
+        let r2_tuning = controls.trigger_tuning("r2");
+        assert_eq!(r2_tuning.curve, Curve::SCurve);
+        assert_eq!(r2_tuning.mode, TriggerMode::DualSense);
+        let text2 = controls.render();
+        assert!(text2.contains("r2 = [\"xinput:RT | deadzone=0.100 curve=s_curve mode=dualsense\", \"key:R\"]"), "{text2}");
+        assert!(Controls::parse(&text2).is_ok());
     }
 
     #[test]
@@ -754,7 +814,7 @@ mod tests {
     #[test]
     fn assign_keeps_trigger_options_and_reports_no_change() {
         let mut controls = Controls::default();
-        controls.set_trigger_tuning("l2", TriggerTuning { deadzone: 0.05, curve: Curve::Cubic }).unwrap();
+        controls.set_trigger_tuning("l2", TriggerTuning { deadzone: 0.05, curve: Curve::Cubic, mode: TriggerMode::Auto }).unwrap();
         controls.assign("l2", "xinput:RT", true).unwrap();
         assert_eq!(controls.sources("l2").unwrap()[0], "xinput:RT | deadzone=0.050 curve=cubic");
         assert_eq!(controls.sources("r2").unwrap()[0], "xinput:LT | deadzone=0.050 curve=cubic");
