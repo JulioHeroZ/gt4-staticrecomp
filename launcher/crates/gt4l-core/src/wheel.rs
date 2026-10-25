@@ -191,12 +191,14 @@ impl WheelConfig {
                 cfg.brake.mode = "normal".into();
                 cfg.clutch.source.clear();
                 cfg.handbrake.source.clear();
-                cfg.buttons.insert("l1".into(), vec!["btn:4".into()]);
-                cfg.buttons.insert("r1".into(), vec!["btn:5".into()]);
+                cfg.buttons.insert("l2".into(), vec!["btn:4".into()]);
+                cfg.buttons.insert("r2".into(), vec!["btn:5".into()]);
                 cfg.buttons.insert("cross".into(), vec!["btn:0".into()]);
                 cfg.buttons.insert("circle".into(), vec!["btn:1".into()]);
                 cfg.buttons.insert("square".into(), vec!["btn:2".into()]);
                 cfg.buttons.insert("triangle".into(), vec!["btn:3".into()]);
+                cfg.buttons.insert("l1".into(), vec!["btn:8".into()]);
+                cfg.buttons.insert("r1".into(), vec!["btn:9".into()]);
                 cfg.buttons.insert("select".into(), vec!["btn:6".into()]);
                 cfg.buttons.insert("start".into(), vec!["btn:7".into()]);
                 cfg.ffb.enabled = false;
@@ -1070,11 +1072,11 @@ fn validate_digital_source(src: &str) -> Result<(), String> {
         return Ok(());
     }
     if let Some(rest) = body.strip_prefix("axis:") {
-        let idx_str = rest
+        let clean = rest
             .strip_suffix('+')
             .or_else(|| rest.strip_suffix('-'))
-            .ok_or_else(|| format!("Button axis source '{src}' requires + or - suffix"))?;
-        let idx: u8 = idx_str
+            .unwrap_or(rest);
+        let idx: u8 = clean
             .parse()
             .map_err(|_| format!("Invalid axis index in '{src}'"))?;
         if idx > 31 {

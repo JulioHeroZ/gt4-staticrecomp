@@ -174,6 +174,19 @@ pub fn detect_wheel_capture(
                     }
                 }
             }
+
+            // 4. Axis motion check for button slots (analog paddles or triggers):
+            for (axis_idx, &cur_val) in cur_dev.axes.iter().enumerate() {
+                let base_val = base_dev.axes.get(axis_idx).copied().unwrap_or(0);
+                let delta = (cur_val as i32 - base_val as i32).abs();
+                if delta >= 18000 {
+                    return Some(CapturedWheelInput {
+                        source: format!("{prefix}axis:{axis_idx}"),
+                        detected_pedal_mode: None,
+                        device_name: cur_dev.name.clone(),
+                    });
+                }
+            }
         }
     }
     None

@@ -185,433 +185,221 @@
   // cx, cy = position of the control on the SVG; badge = [bx, by] chip position; lead = [lx, ly] leader start.
 
   var WHEEL_ITEMS = {
-
     steering: {
-
       id: "steering",
-
-      name: "Steering Axis",
-
+      name: "Volante / Eixo de Direção",
       kind: "steering",
-
       x: 500,
-
-      y: 88,
-
-      badge: [150, 56],
-
-      lead: [430, 82]
-
+      y: 54,
+      badge: [150, 50],
+      lead: [417, 46]
     },
-
-    l1: {
-
-      id: "l1",
-
-      name: "Shift Down (L1 Paddle)",
-
-      kind: "button",
-
-      x: 346,
-
-      y: 222,
-
-      badge: [118, 118],
-
-      lead: [326, 200]
-
-    },
-
-    r1: {
-
-      id: "r1",
-
-      name: "Shift Up (R1 Paddle)",
-
-      kind: "button",
-
-      x: 654,
-
-      y: 222,
-
-      badge: [882, 118],
-
-      lead: [674, 200]
-
-    },
-
     l2: {
-
       id: "l2",
-
-      name: "L2 Button / Look Back",
-
+      name: "Trocar Marcha - (L2 / Borboleta Esq)",
       kind: "button",
-
-      x: 416,
-
-      y: 196,
-
-      badge: [118, 168],
-
-      lead: [406, 194]
-
+      x: 318,
+      y: 212,
+      badge: [118, 118],
+      lead: [295, 186]
     },
-
     r2: {
-
       id: "r2",
-
-      name: "R2 Button / Ghost",
-
+      name: "Trocar Marcha + (R2 / Borboleta Dir)",
       kind: "button",
-
-      x: 584,
-
-      y: 196,
-
+      x: 682,
+      y: 212,
+      badge: [882, 118],
+      lead: [705, 186]
+    },
+    l1: {
+      id: "l1",
+      name: "Olhar para Trás (L1 / Visão Traseira)",
+      kind: "button",
+      x: 401,
+      y: 181,
+      badge: [118, 168],
+      lead: [389, 179]
+    },
+    r1: {
+      id: "r1",
+      name: "Nitro / Boost (R1)",
+      kind: "button",
+      x: 599,
+      y: 181,
       badge: [882, 168],
-
-      lead: [594, 194]
-
+      lead: [611, 179]
     },
-
     dpad_up: {
-
       id: "dpad_up",
-
-      name: "D-pad Up",
-
+      name: "D-pad Cima",
       kind: "button",
-
-      x: 392,
-
-      y: 226,
-
+      x: 373,
+      y: 216,
       badge: [118, 218],
-
-      lead: [392, 214]
-
+      lead: [373, 202]
     },
-
     dpad_left: {
-
       id: "dpad_left",
-
-      name: "D-pad Left",
-
+      name: "D-pad Esquerda",
       kind: "button",
-
-      x: 372,
-
-      y: 246,
-
+      x: 349,
+      y: 240,
       badge: [118, 264],
-
-      lead: [358, 246]
-
+      lead: [332, 240]
     },
-
     dpad_right: {
-
       id: "dpad_right",
-
-      name: "D-pad Right",
-
+      name: "D-pad Direita",
       kind: "button",
-
-      x: 412,
-
-      y: 246,
-
+      x: 396,
+      y: 240,
       badge: [118, 310],
-
-      lead: [426, 246]
-
+      lead: [413, 240]
     },
-
     dpad_down: {
-
       id: "dpad_down",
-
-      name: "D-pad Down",
-
+      name: "D-pad Baixo",
       kind: "button",
-
-      x: 392,
-
-      y: 266,
-
+      x: 373,
+      y: 264,
       badge: [118, 356],
-
-      lead: [392, 278]
-
+      lead: [373, 278]
     },
-
     triangle: {
-
       id: "triangle",
-
-      name: "Triangle (Reverse / Zoom)",
-
+      name: "Triângulo △ (Ré / Visão Alternativa)",
       kind: "button",
-
-      x: 608,
-
-      y: 226,
-
+      x: 627,
+      y: 216,
       badge: [882, 218],
-
-      lead: [608, 214]
-
+      lead: [627, 202]
     },
-
     square: {
-
       id: "square",
-
-      name: "Square (Brake / Alt View)",
-
+      name: "Quadrado ◻ (Freio / Cancelar)",
       kind: "button",
-
-      x: 588,
-
-      y: 246,
-
+      x: 604,
+      y: 240,
       badge: [882, 264],
-
-      lead: [574, 246]
-
+      lead: [587, 240]
     },
-
     circle: {
-
       id: "circle",
-
-      name: "Circle (Handbrake / Back)",
-
+      name: "Círculo ◯ (Freio de Mão / Voltar)",
       kind: "button",
-
-      x: 628,
-
-      y: 246,
-
+      x: 651,
+      y: 240,
       badge: [882, 310],
-
-      lead: [642, 246]
-
+      lead: [668, 240]
     },
-
     cross: {
-
       id: "cross",
-
-      name: "Cross (Confirm / Throttle)",
-
+      name: "Cruz ✕ (Acelerar / Confirmar)",
       kind: "button",
-
-      x: 608,
-
-      y: 266,
-
+      x: 627,
+      y: 264,
       badge: [882, 356],
-
-      lead: [608, 278]
-
+      lead: [627, 278]
     },
-
     l3: {
-
       id: "l3",
-
-      name: "L3 (Horn / Flash)",
-
+      name: "L3 (Buzina / Luz Alta)",
       kind: "button",
-
-      x: 438,
-
-      y: 304,
-
+      x: 427,
+      y: 308,
       badge: [148, 404],
-
-      lead: [430, 308]
-
+      lead: [417, 313]
     },
-
     r3: {
-
       id: "r3",
-
-      name: "R3 (Rear View)",
-
+      name: "R3 (Câmera Traseira)",
       kind: "button",
-
-      x: 562,
-
-      y: 304,
-
+      x: 573,
+      y: 308,
       badge: [852, 404],
-
-      lead: [570, 308]
-
+      lead: [583, 313]
     },
-
     select: {
-
       id: "select",
-
-      name: "Select (Change Camera)",
-
+      name: "Select (Mudar Câmera)",
       kind: "button",
-
-      x: 468,
-
-      y: 344,
-
+      x: 462,
+      y: 356,
       badge: [264, 434],
-
-      lead: [464, 354]
-
+      lead: [458, 367]
     },
-
     start: {
-
       id: "start",
-
-      name: "Start (Pause Race)",
-
+      name: "Start (Pausar Corrida)",
       kind: "button",
-
-      x: 532,
-
-      y: 344,
-
+      x: 538,
+      y: 356,
       badge: [736, 434],
-
-      lead: [536, 354]
-
+      lead: [542, 367]
     },
-
-    clutch: {
-
-      id: "clutch",
-
-      name: "Clutch Pedal",
-
-      kind: "pedal",
-
-      x: 310,
-
-      y: 548,
-
-      badge: [310, 646],
-
-      lead: [310, 610]
-
-    },
-
-    brake: {
-
-      id: "brake",
-
-      name: "Brake Pedal",
-
-      kind: "pedal",
-
-      x: 446,
-
-      y: 548,
-
-      badge: [446, 646],
-
-      lead: [446, 610]
-
-    },
-
     throttle: {
-
       id: "throttle",
-
-      name: "Throttle Pedal",
-
+      name: "Pedal Acelerador → Acelerar (Cruz ✕)",
       kind: "pedal",
-
       x: 582,
-
       y: 548,
-
       badge: [582, 646],
-
       lead: [582, 610]
-
     },
-
-    handbrake: {
-
-      id: "handbrake",
-
-      name: "Handbrake Axis",
-
+    brake: {
+      id: "brake",
+      name: "Pedal Freio → Frear (Quadrado ◻)",
       kind: "pedal",
-
-      x: 726,
-
+      x: 446,
       y: 548,
-
+      badge: [446, 646],
+      lead: [446, 610]
+    },
+    clutch: {
+      id: "clutch",
+      name: "Pedal de Embreagem (Clutch)",
+      kind: "pedal",
+      x: 310,
+      y: 548,
+      badge: [310, 646],
+      lead: [310, 610]
+    },
+    handbrake: {
+      id: "handbrake",
+      name: "Freio de Mão (Eixo / Alavanca)",
+      kind: "pedal",
+      x: 726,
+      y: 548,
       badge: [726, 646],
-
       lead: [726, 610]
-
     }
-
   };
 
 
 
   var ITEM_ORDER = [
-
     "steering",
-
     "throttle",
-
     "brake",
-
-    "clutch",
-
-    "handbrake",
-
-    "l1",
-
     "r1",
-
-    "cross",
-
-    "circle",
-
-    "square",
-
-    "triangle",
-
-    "dpad_up",
-
-    "dpad_down",
-
-    "dpad_left",
-
-    "dpad_right",
-
-    "l2",
-
     "r2",
-
-    "l3",
-
-    "r3",
-
+    "l2",
+    "cross",
+    "square",
+    "circle",
+    "triangle",
+    "l1",
+    "handbrake",
+    "clutch",
     "select",
-
-    "start"
-
+    "start",
+    "dpad_up",
+    "dpad_down",
+    "dpad_left",
+    "dpad_right",
+    "l3",
+    "r3"
   ];
 
 
@@ -1052,7 +840,8 @@
 
     // 1. Servo Wheelbase Housing (stationary behind the rotating wheel)
 
-    var baseGroup = svgEl("g", { class: "wh-servo-base" }, svg);
+    var wheelScaler = svgEl("g", { id: "wh-wheel-scaler", transform: "translate(500, 240) scale(1.18) translate(-500, -246)" }, svg);
+    var baseGroup = svgEl("g", { class: "wh-servo-base" }, wheelScaler);
 
     svgEl(
 
@@ -1116,7 +905,7 @@
 
     // 2. Rotating Steering Wheel Group (centered at 500, 246)
 
-    var rotatingGroup = svgEl("g", { class: "wh-rotating-rim" }, svg);
+    var rotatingGroup = svgEl("g", { class: "wh-rotating-rim" }, wheelScaler);
 
 
 
@@ -1139,35 +928,20 @@
     }
 
     makePaddle(
-
-      "l1",
-
+      "l2",
       "M 358 158 L 328 172 C 320 198 320 248 328 274 L 358 286 L 366 266 C 358 242 358 202 366 178 Z",
-
       343,
-
       228,
-
-      "L1",
-
+      "L2",
       [316, 152, 56, 140]
-
     );
-
     makePaddle(
-
-      "r1",
-
+      "r2",
       "M 642 158 L 672 172 C 680 198 680 248 672 274 L 642 286 L 634 266 C 642 242 642 202 634 178 Z",
-
       657,
-
       228,
-
-      "R1",
-
+      "R2",
       [628, 152, 56, 140]
-
     );
 
 
@@ -1418,9 +1192,8 @@
 
     // L2 / R2 / L3 / R3 / Select / Start on the wheel spokes
 
-    makeSpokeButton("l2", 416, 196, 10, "L2", null);
-
-    makeSpokeButton("r2", 584, 196, 10, "R2", null);
+    makeSpokeButton("l1", 416, 196, 10, "L1", null);
+    makeSpokeButton("r1", 584, 196, 10, "R1", null);
 
     makeSpokeButton("l3", 438, 304, 10, "L3", null);
 
@@ -1907,6 +1680,7 @@
       }
 
       state.selected = id;
+      paintButtonList();
 
       diagram.setSelected(id);
 
@@ -2228,9 +2002,16 @@
 
 
 
+    var remapList = h("div", { class: "cx-remap-list" });
+    var buttonMappingSection = h("section", { class: "cx-remap-section" }, [
+      h("h2", null, ["Mapeamento de Botões & Pedais", h("small", { text: "Clique para remapear" })]),
+      remapList
+    ]);
+
     var panel = h("aside", { class: "cx-panel", "aria-label": "Selected wheel control and settings" }, [
 
       selectedCard,
+      buttonMappingSection,
 
       h("section", { class: "cx-analog" }, [
 
@@ -2821,6 +2602,82 @@
       );
 
     }
+    function paintButtonList() {
+      var cfg = state.config;
+      if (!cfg) return;
+      GT4.ui.clear(remapList);
+
+      var order = [
+        "throttle", "brake", "r1", "r2", "l2", "cross", "square", "circle", "triangle",
+        "l1", "handbrake", "clutch", "steering", "select", "start",
+        "dpad_up", "dpad_down", "dpad_left", "dpad_right", "l3", "r3"
+      ];
+
+      order.forEach(function (id) {
+        var item = WHEEL_ITEMS[id] || { name: id, kind: "button" };
+        var src = "";
+        if (id === "steering") {
+          src = (cfg.steering && cfg.steering.source) || "";
+        } else if (["throttle", "brake", "handbrake", "clutch"].indexOf(id) >= 0) {
+          src = (cfg[id] && cfg[id].source) || "";
+        } else {
+          var list = (cfg.buttons && cfg.buttons[id]) || [];
+          src = list.join(", ");
+        }
+
+        var isSel = state.selected === id;
+        var row = h("div", {
+          class: "cx-remap-row" + (isSel ? " is-selected" : ""),
+          on: {
+            click: function (ev) {
+              if (ev.target.tagName !== "BUTTON") {
+                onPick(id, "click");
+              }
+            }
+          }
+        });
+
+        var left = h("div", { class: "cx-remap-left" }, [
+          h("span", { class: "cx-remap-glyph" }, [buildItemGlyph(id)]),
+          h("div", { class: "cx-remap-info" }, [
+            h("div", { class: "cx-remap-name", text: item.name }),
+            h("div", { class: "cx-remap-role", text: longSourceText(src.split(",")[0] || "") })
+          ])
+        ]);
+
+        var chip = h("span", { class: "xchip " + (src ? "kind-trigger" : "kind-none") }, shortSourceText(src.split(",")[0] || ""));
+
+        var rebind = h("button", {
+          class: "btn primary small",
+          type: "button",
+          on: {
+            click: function (ev) {
+              ev.stopPropagation();
+              onPick(id, "click");
+              startCapture(id);
+            }
+          }
+        }, "Remapear");
+
+        var clear = h("button", {
+          class: "btn small",
+          type: "button",
+          title: "Limpar",
+          on: {
+            click: function (ev) {
+              ev.stopPropagation();
+              call("reset_wheel_binding", { target: id, clear: true }).then(applyView);
+            }
+          }
+        }, "Limpar");
+
+        var actions = h("div", { class: "cx-remap-actions" }, [chip, rebind, clear]);
+        row.appendChild(left);
+        row.appendChild(actions);
+        remapList.appendChild(row);
+      });
+    }
+
 
 
 
@@ -2847,6 +2704,7 @@
       diagram.setSelected(state.selected);
 
       paintSelectedCard();
+      paintButtonList();
 
       paintProfileAndFfb();
 

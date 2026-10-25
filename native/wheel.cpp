@@ -271,7 +271,7 @@ bool evaluate_digital_source(const SourceRef &ref, const std::vector<DeviceReadi
   case SourceKind::axis_negative:
     return ref.index < dev->axes.size() && dev->axes[ref.index] < -16384;
   case SourceKind::axis:
-    return false;
+    return ref.index < dev->axes.size() && (dev->axes[ref.index] > 0 || std::abs(dev->axes[ref.index]) > 20000);
   }
   return false;
 }
@@ -533,14 +533,20 @@ WheelConfig preset_wheel_config(std::string_view preset_name) {
     cfg.brake.mode = PedalAxisMode::normal;
     cfg.clutch.source = {};
     cfg.handbrake.source = {};
-    cfg.buttons[10] = {{SourceKind::button, {}, 4, HatDirection::up}}; // l1 / paddle down (LB)
-    cfg.buttons[11] = {{SourceKind::button, {}, 5, HatDirection::up}}; // r1 / paddle up (RB)
+    cfg.buttons[0] = {{SourceKind::hat, {}, 0, HatDirection::up}};    // dpad_up
+    cfg.buttons[1] = {{SourceKind::hat, {}, 0, HatDirection::right}}; // dpad_right
+    cfg.buttons[2] = {{SourceKind::hat, {}, 0, HatDirection::down}};  // dpad_down
+    cfg.buttons[3] = {{SourceKind::hat, {}, 0, HatDirection::left}};  // dpad_left
     cfg.buttons[4] = {{SourceKind::button, {}, 0, HatDirection::up}};  // cross (A)
     cfg.buttons[5] = {{SourceKind::button, {}, 1, HatDirection::up}};  // circle (B)
     cfg.buttons[6] = {{SourceKind::button, {}, 2, HatDirection::up}};  // square (X)
     cfg.buttons[7] = {{SourceKind::button, {}, 3, HatDirection::up}};  // triangle (Y)
-    cfg.buttons[8] = {{SourceKind::button, {}, 6, HatDirection::up}};  // select (Back)
-    cfg.buttons[9] = {{SourceKind::button, {}, 7, HatDirection::up}};  // start (Start)
+    cfg.buttons[8] = {{SourceKind::button, {}, 8, HatDirection::up}};  // l1 (L3 / Look Back)
+    cfg.buttons[9] = {{SourceKind::button, {}, 9, HatDirection::up}};  // r1 (R3 / Nitro)
+    cfg.buttons[10] = {{SourceKind::button, {}, 4, HatDirection::up}}; // l2 (LB / paddle down)
+    cfg.buttons[11] = {{SourceKind::button, {}, 5, HatDirection::up}}; // r2 (RB / paddle up)
+    cfg.buttons[14] = {{SourceKind::button, {}, 6, HatDirection::up}}; // select (Back)
+    cfg.buttons[15] = {{SourceKind::button, {}, 7, HatDirection::up}}; // start (Start)
     cfg.ffb.enabled = false;
     return cfg;
   }
@@ -1023,12 +1029,22 @@ PadState map_wheel_devices(const WheelConfig &config,
   const std::uint8_t brake_val = evaluate_pedal_channel(config.brake, devices, primary_idx);
 
   switch (config.pedal_map_mode) {
-  case PedalMapMode::cross_square:
+  case PedalMapMode::cross_square: {
     if (throttle_val > 0)
       press_pad_button(pad, 14, throttle_val); // Cross
     if (brake_val > 0)
       press_pad_button(pad, 15, brake_val); // Square
+    // Also drive rstick_y proportionally so pedals work regardless of GT4 in-game controller type:
+    const int net = static_cast<int>(throttle_val) - static_cast<int>(brake_val);
+    if (net > 0) {
+      const int offset = (net * 128 + 127) / 255;
+      pad.axes[1] = static_cast<std::uint8_t>(std::clamp(128 - offset, 0, 128));
+    } else if (net < 0) {
+      const int offset = ((-net) * 127 + 127) / 255;
+      pad.axes[1] = static_cast<std::uint8_t>(std::clamp(128 + offset, 128, 255));
+    }
     break;
+  }
   case PedalMapMode::l2_r2:
     if (throttle_val > 0)
       press_pad_button(pad, 9, throttle_val); // R2
