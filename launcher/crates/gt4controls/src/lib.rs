@@ -747,7 +747,7 @@ mod tests {
     fn trigger_tuning_round_trips_through_the_source_options() {
         let mut controls = Controls::default();
         controls
-            .set_trigger_tuning("l2", TriggerTuning { deadzone: 0.05, curve: Curve::Quadratic })
+            .set_trigger_tuning("l2", TriggerTuning { deadzone: 0.05, curve: Curve::Quadratic, mode: TriggerMode::Auto })
             .unwrap();
         let tuning = controls.trigger_tuning("l2");
         assert!((tuning.deadzone - 0.05).abs() < 0.001);
