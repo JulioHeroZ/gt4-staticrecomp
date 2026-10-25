@@ -246,6 +246,97 @@
       slider("lstick_deadzone", "Left stick deadzone", 24), slider("rstick_deadzone", "Right stick deadzone", 26.5)];
   }
   var analog = analogDefaults();
+  var wheelState = {
+    enabled: true,
+    preset: "generic",
+    steering_range_deg: 900,
+    steering_deadzone: 1,
+    steering_linearity: 100,
+    throttle_deadzone: 2,
+    throttle_curve: "linear",
+    brake_deadzone: 2,
+    brake_curve: "linear",
+    clutch_deadzone: 5,
+    handbrake_deadzone: 5,
+    ffb_enabled: true,
+    ffb_strength: 100,
+    ffb_spring: 65,
+    ffb_damper: 30,
+    bindings: {
+      steer: { source: "wheel:Axis0", label: "Wheel · Axis 1 (Steering)", is_default: true },
+      throttle: { source: "wheel:Axis1 | mode=inverted", label: "Wheel · Axis 2 (Inverted 1..-1)", is_default: true },
+      brake: { source: "wheel:Axis2 | mode=inverted", label: "Wheel · Axis 3 (Inverted 1..-1)", is_default: true },
+      clutch: { source: "wheel:Axis3 | mode=inverted", label: "Wheel · Axis 4 (Inverted 1..-1)", is_default: true },
+      handbrake: { source: "", label: "Unbound", is_default: true },
+      shift_up: { source: "wheel:Button4", label: "Wheel · Button 5", is_default: true },
+      shift_down: { source: "wheel:Button5", label: "Wheel · Button 6", is_default: true }
+    }
+  };
+  function mockWheelView() {
+    var actions = [
+      ["steer", "Steering Axis", "axis"],
+      ["throttle", "Throttle Pedal", "axis"],
+      ["brake", "Brake Pedal", "axis"],
+      ["clutch", "Clutch Pedal", "axis"],
+      ["handbrake", "Handbrake Axis", "axis"],
+      ["shift_up", "Paddle / Shift Up", "button"],
+      ["shift_down", "Paddle / Shift Down", "button"]
+    ].map(function (entry) {
+      var b = wheelState.bindings[entry[0]] || { source: "", label: "Unbound", is_default: true };
+      return { id: entry[0], name: entry[1], kind: entry[2], source: b.source, label: b.label, is_default: b.is_default };
+    });
+    return Object.assign({}, wheelState, {
+      presets: [
+        { id: "generic", label: "Universal DirectInput / USB Wheel" },
+        { id: "logitech_g29", label: "Logitech G25 / G27 / G29 / G920 / G923 / DFGT" },
+        { id: "thrustmaster", label: "Thrustmaster T150 / T248 / T300 / TX / T-GT / TS-PC" },
+        { id: "fanatec", label: "Fanatec CSL DD / GT DD Pro / ClubSport / Podium" },
+        { id: "moza", label: "Moza R3 / R5 / R9 / R12 / R16 / R21" },
+        { id: "simagic", label: "Simagic Alpha / M10 / Cammus / Direct Drive" }
+      ],
+      actions: actions,
+      config: {
+        enabled: wheelState.enabled,
+        preset: wheelState.preset,
+        device_guid: "",
+        device_name: "",
+        pedal_map_mode: "triggers",
+        steering: { source: "axis:0", rotation_degrees: 900, effective_degrees: wheelState.steering_range_deg, deadzone: 0.01, linearity: "linear", sensitivity: 1.0, invert: false },
+        throttle: { source: "axis:1", mode: "inverted", deadzone: 0.02, saturation: 0.98, curve: "linear" },
+        brake: { source: "axis:2", mode: "inverted", deadzone: 0.02, saturation: 0.95, curve: "linear" },
+        handbrake: { source: "", mode: "inverted", deadzone: 0.05, saturation: 0.95, curve: "linear" },
+        clutch: { source: "axis:3", mode: "inverted", deadzone: 0.05, saturation: 0.95, curve: "linear" },
+        ffb: { enabled: wheelState.ffb_enabled, strength: 1.0, centering_spring: 0.65, damper: 0.3, rumble_Fallback: true }
+      },
+      button_slots: [
+        { id: "r1", label: "Shift Up (R1)", bindings: ["button:4"] },
+        { id: "l1", label: "Shift Down (L1)", bindings: ["button:5"] },
+        { id: "cross", label: "Confirm / Throttle (Cross)", bindings: ["button:0"] },
+        { id: "circle", label: "Cancel / Handbrake (Circle)", bindings: ["button:1"] },
+        { id: "square", label: "Brake / Reverse (Square)", bindings: ["button:2"] },
+        { id: "triangle", label: "Reverse / View (Triangle)", bindings: ["button:3"] },
+        { id: "start", label: "Pause / Start", bindings: ["button:9"] },
+        { id: "select", label: "Change View / Select", bindings: ["button:8"] }
+      ],
+      wheel_status: { available: true, devices: [], error: "" },
+      status: { available: true, connected: false, primary_name: "", count: 0, devices: [], error: "" }
+    });
+  }
+  function mockWheelCommand(command, args) {
+    if (command === "set_wheel_setting" && args.id) {
+      wheelState[args.id] = args.value;
+    } else if (command === "apply_wheel_preset" && args.preset) {
+      wheelState.preset = args.preset;
+    } else if (command === "assign_wheel_binding" && args.action) {
+      wheelState.bindings[args.action] = { source: args.source || "", label: args.source || "Unbound", is_default: false };
+    } else if (command === "reset_wheel_binding" && args.action) {
+      wheelState.bindings[args.action] = { source: "wheel:Button0", label: "Default", is_default: true };
+    } else if (command === "reset_wheel_config") {
+      wheelState.preset = "generic";
+      wheelState.steering_range_deg = 900;
+    }
+    return mockWheelView();
+  }
 
   function base(source) { return String(source).split("|")[0].trim(); }
   function familyOf(source) { return base(source).split(":")[0]; }
@@ -451,6 +542,21 @@
         bindings[args.control] = DEFAULT_SOURCES[args.control].slice();
         return null;
       case "reset_all_bindings":
+        bindings = JSON.parse(JSON.stringify(DEFAULT_SOURCES));
+        analog = analogDefaults();
+        return controlsView();
+      case "get_wheel_config":
+      case "set_wheel_setting":
+      case "apply_wheel_preset":
+      case "assign_wheel_binding":
+      case "reset_wheel_binding":
+      case "reset_wheel_config":
+        return mockWheelCommand(command, args);
+      case "capture_wheel_binding":
+        return Promise.resolve({ action: args.action || "", source: "wheel:Button0" });
+      case "cancel_wheel_capture":
+      case "test_wheel_ffb":
+        return null;
         bindings = JSON.parse(JSON.stringify(DEFAULT_SOURCES));
         analog = analogDefaults();
         return controlsView();

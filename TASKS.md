@@ -57,7 +57,7 @@ See [GS renderer options](docs/GS-RENDERER-OPTIONS.md) and [GSDX-PLAN](docs/GSDX
 | TASK‑015 | LWR sign-extension fidelity check | ✅ Done (already correct; no change) |
 | TASK‑016 | IOP per-module cost counters and review | ⏸️ Deferred (not needed for 1.0.0) |
 | TASK‑017 | License-test crash | ✅ Done (2026-10-16) · license demo guard on both demo loaders (slice206, `--mode pcsx2`): licenses playable, demos that decrypt wrong are skipped as in PCSX2 default; root cause moved to TASK‑063 |
-| TASK‑018 | Racing wheels with force feedback: the game sees a Logitech Driving Force GT, force feedback through SDL3, a Wheel tab in the launcher | 📋 Planned · release 1.4.0 (owner, 2026-10-22) |
+| TASK‑018 | Universal configurable racing wheel support (`wheel.toml`, multi-device SDL3 joystick/pedals/shifter/handbrake, 5 pedal axis polarities, steering lock & linearity, FFB/haptics, Launcher Racing Wheel configurator) | 🧪 Waiting for owner test (`task/018-racing-wheels`, docs/WHEEL.md) |
 | TASK‑019 | Launcher 1.0.0 (Rust core + Tauri 2 HTML frontend) and NSIS per-user installer | ✅ Launcher merged into main (2026-10-21): setup with disc copy, gt4-gs download, settings, saves, controls (SDL3), tray, updates; owner tested end to end. Still for 1.0.0: NSIS installer build and the v1.0.0 release |
 | TASK‑020 | Decomp names in generated EE code (waits for more decompilation progress) | 📋 Planned |
 | TASK‑025 | Save manager: memory card slots, import/export | ✅ Code done, merged into `task/019-launcher`; ships with the launcher (owner test pending) |

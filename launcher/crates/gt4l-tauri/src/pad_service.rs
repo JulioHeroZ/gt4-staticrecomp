@@ -1,5 +1,5 @@
-//! The launcher's gamepad service. One thread owns the SDL3 reader (`gt4l_platform::sdl_pads`, the layer the game
-//! uses) and turns it into Tauri events for the page:
+//! The launcher's gamepad and racing wheel service. One thread owns the SDL3 reader (`gt4l_platform::sdl_pads`,
+//! the layer the game uses) and turns it into Tauri events for the page:
 //!
 //! - `pad-status` `{available, connected, name, kind, player_index, count, error}`: on every change. `count` is the
 //!   number of pads, and the named pad is "controller 1 of N", the one the game reads (`pad::active_pad`).
@@ -7,9 +7,11 @@
 //!   `sources` holds the pressure (0..1) of each controls-file source (`xinput:A`, `xinput:LT`...); the page maps
 //!   them to the DS2 buttons through the controls file. `sticks.left|right` are -1..1, y positive down.
 //! - `pad-nav` `{name}`: a press for nav.js (`a b x y lb rb start`, and `up down left right` with repeat).
+//! - `wheel-status` `{available, devices}`: on every change to connected USB racing wheels / joysticks.
+//! - `wheel-live` `{devices}`: live raw axes, buttons and hats for the Wheel settings tab.
 //!
 //! The thread does no SDL work while the window is hidden for a game (`Handle::set_active(false)`, called from the
-//! tray). A rebind capture is answered by the same loop, so the page never reads the pad itself.
+//! tray). Rebind captures are answered by the same loop, so the page never reads the pad or wheel itself.
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{channel, Receiver, Sender};
@@ -18,6 +20,9 @@ use std::time::{Duration, Instant};
 
 use gt4l_platform::pad::{self, PadSample};
 use gt4l_platform::sdl_pads::{PadInfo, SdlPads};
+use gt4l_platform::sdl_wheels::{
+    detect_wheel_capture, CapturedWheelInput, RawWheelDeviceState, WheelDeviceInfo,
+};
 use serde_json::{json, Map, Value};
 use tauri::{AppHandle, Emitter, Manager};
 
@@ -33,6 +38,19 @@ enum Command {
     /// Waits for the next newly pressed control of the active pad; the reply carries its source name.
     Capture(Sender<Result<String, String>>),
     Cancel,
+    /// Waits for the next axis motion, pedal press, button press or hat press on a connected wheel/joystick.
+    CaptureWheel {
+        target: String,
+        primary_guid: String,
+        reply: Sender<Result<CapturedWheelInput, String>>,
+    },
+    CancelWheel,
+    /// Plays a short Force Feedback / rumble test pulse on a wheel.
+    TestWheelFfb {
+        guid: String,
+        strength: f64,
+        reply: Sender<Result<String, String>>,
+    },
 }
 
 struct PendingCapture {
@@ -41,11 +59,19 @@ struct PendingCapture {
     baseline: Option<PadSample>,
 }
 
+struct PendingWheelCapture {
+    target: String,
+    primary_guid: String,
+    reply: Sender<Result<CapturedWheelInput, String>>,
+    baseline: Option<Vec<RawWheelDeviceState>>,
+}
+
 /// The page-facing side of the service, kept in Tauri's state.
 #[derive(Clone)]
 pub struct Handle {
     commands: Sender<Command>,
     status: Arc<Mutex<Value>>,
+    wheel_status: Arc<Mutex<Value>>,
     active: Arc<AtomicBool>,
 }
 
@@ -63,6 +89,34 @@ impl Handle {
         let _ = self.commands.send(Command::Cancel);
     }
 
+    pub fn start_wheel_capture(
+        &self,
+        target: String,
+        primary_guid: String,
+    ) -> Receiver<Result<CapturedWheelInput, String>> {
+        let (reply, receiver) = channel();
+        let _ = self.commands.send(Command::CaptureWheel {
+            target,
+            primary_guid,
+            reply,
+        });
+        receiver
+    }
+
+    pub fn cancel_wheel_capture(&self) {
+        let _ = self.commands.send(Command::CancelWheel);
+    }
+
+    pub fn test_wheel_ffb(&self, guid: String, strength: f64) -> Receiver<Result<String, String>> {
+        let (reply, receiver) = channel();
+        let _ = self.commands.send(Command::TestWheelFfb {
+            guid,
+            strength,
+            reply,
+        });
+        receiver
+    }
+
     /// False while the window is hidden for a game: the service stops reading the pad.
     pub fn set_active(&self, active: bool) {
         self.active.store(active, Ordering::Relaxed);
@@ -75,6 +129,14 @@ impl Handle {
             Err(poisoned) => poisoned.into_inner().clone(),
         }
     }
+
+    /// The last `wheel-status` payload.
+    pub fn wheel_status(&self) -> Value {
+        match self.wheel_status.lock() {
+            Ok(value) => value.clone(),
+            Err(poisoned) => poisoned.into_inner().clone(),
+        }
+    }
 }
 
 /// Starts the service thread and returns its handle. Manage the handle in Tauri's state.
@@ -83,6 +145,7 @@ pub fn spawn(app: AppHandle) -> Handle {
     let handle = Handle {
         commands,
         status: Arc::new(Mutex::new(status_json(false, 0, None, "starting"))),
+        wheel_status: Arc::new(Mutex::new(wheel_status_json(false, &[], "starting"))),
         active: Arc::new(AtomicBool::new(true)),
     };
     let worker = handle.clone();
@@ -91,7 +154,16 @@ pub fn spawn(app: AppHandle) -> Handle {
         .spawn(move || run(app, receiver, worker));
     if spawned.is_err() {
         // No thread: captures fail at once (the dropped receiver) and the status says so.
-        publish(None, &handle, status_json(false, 0, None, "the gamepad thread could not start"));
+        publish(
+            None,
+            &handle,
+            status_json(false, 0, None, "the gamepad thread could not start"),
+        );
+        publish_wheel(
+            None,
+            &handle,
+            wheel_status_json(false, &[], "the gamepad thread could not start"),
+        );
     }
     handle
 }
@@ -106,6 +178,53 @@ pub fn status_json(available: bool, count: usize, active: Option<&PadInfo>, erro
         "player_index": active.and_then(|pad| pad.player_index),
         "count": count,
         "error": error,
+    })
+}
+
+/// The `wheel-status` payload.
+pub fn wheel_status_json(available: bool, devices: &[WheelDeviceInfo], error: &str) -> Value {
+    let items: Vec<Value> = devices
+        .iter()
+        .map(|d| {
+            json!({
+                "id": d.id,
+                "guid": d.guid,
+                "name": d.name,
+                "is_wheel": d.is_wheel,
+                "is_gamepad": d.is_gamepad,
+                "num_axes": d.num_axes,
+                "num_buttons": d.num_buttons,
+                "num_hats": d.num_hats,
+                "has_ffb": d.has_ffb,
+            })
+        })
+        .collect();
+    json!({
+        "available": available,
+        "devices": items,
+        "error": error,
+    })
+}
+
+/// The `wheel-live` payload: raw axes, buttons and hats of every connected USB joystick/wheel.
+pub fn wheel_live_json(devices: &[RawWheelDeviceState]) -> Value {
+    let items: Vec<Value> = devices
+        .iter()
+        .map(|d| {
+            json!({
+                "id": d.id,
+                "guid": d.guid,
+                "name": d.name,
+                "is_wheel": d.is_wheel,
+                "is_gamepad": d.is_gamepad,
+                "axes": d.axes,
+                "buttons": d.buttons,
+                "hats": d.hats,
+            })
+        })
+        .collect();
+    json!({
+        "devices": items,
     })
 }
 
@@ -138,6 +257,15 @@ fn publish(app: Option<&AppHandle>, handle: &Handle, status: Value) {
     }
 }
 
+fn publish_wheel(app: Option<&AppHandle>, handle: &Handle, status: Value) {
+    if let Ok(mut slot) = handle.wheel_status.lock() {
+        *slot = status.clone();
+    }
+    if let Some(app) = app {
+        let _ = app.emit("wheel-status", status);
+    }
+}
+
 fn log(app: &AppHandle, message: &str) {
     let dirs = {
         let shared = app.state::<Shared>();
@@ -153,20 +281,36 @@ fn run(app: AppHandle, commands: Receiver<Command>, handle: Handle) {
         Err(message) => {
             log(&app, &format!("controller input unavailable: {message}"));
             publish(Some(&app), &handle, status_json(false, 0, None, &message));
+            publish_wheel(
+                Some(&app),
+                &handle,
+                wheel_status_json(false, &[], &message),
+            );
             // Keep answering: a capture fails with the reason instead of waiting for a pad that cannot come.
             while let Ok(command) = commands.recv() {
-                if let Command::Capture(reply) = command {
-                    let _ = reply.send(Err(message.clone()));
+                match command {
+                    Command::Capture(reply) => {
+                        let _ = reply.send(Err(message.clone()));
+                    }
+                    Command::CaptureWheel { reply, .. } => {
+                        let _ = reply.send(Err(message.clone()));
+                    }
+                    Command::TestWheelFfb { reply, .. } => {
+                        let _ = reply.send(Err(message.clone()));
+                    }
+                    Command::Cancel | Command::CancelWheel => {}
                 }
             }
             return;
         }
     };
-    log(&app, "controller input: SDL3 gamepad subsystem started");
+    log(&app, "controller input: SDL3 gamepad + joystick subsystems started");
 
     let mut navigator = Navigator::default();
     let mut capture: Option<PendingCapture> = None;
+    let mut wheel_capture: Option<PendingWheelCapture> = None;
     let mut last_status = Value::Null;
+    let mut last_wheel_status = Value::Null;
     let mut was_active = true;
 
     loop {
@@ -177,12 +321,42 @@ fn run(app: AppHandle, commands: Receiver<Command>, handle: Handle) {
                     if let Some(previous) = capture.take() {
                         let _ = previous.reply.send(Err(CAPTURE_CANCELLED.to_string()));
                     }
-                    capture = Some(PendingCapture { reply, baseline: None });
+                    capture = Some(PendingCapture {
+                        reply,
+                        baseline: None,
+                    });
                 }
                 Command::Cancel => {
                     if let Some(pending) = capture.take() {
                         let _ = pending.reply.send(Err(CAPTURE_CANCELLED.to_string()));
                     }
+                }
+                Command::CaptureWheel {
+                    target,
+                    primary_guid,
+                    reply,
+                } => {
+                    if let Some(previous) = wheel_capture.take() {
+                        let _ = previous.reply.send(Err(CAPTURE_CANCELLED.to_string()));
+                    }
+                    wheel_capture = Some(PendingWheelCapture {
+                        target,
+                        primary_guid,
+                        reply,
+                        baseline: None,
+                    });
+                }
+                Command::CancelWheel => {
+                    if let Some(pending) = wheel_capture.take() {
+                        let _ = pending.reply.send(Err(CAPTURE_CANCELLED.to_string()));
+                    }
+                }
+                Command::TestWheelFfb {
+                    guid,
+                    strength,
+                    reply,
+                } => {
+                    let _ = reply.send(pads.test_wheel_ffb(&guid, strength));
                 }
             }
         }
@@ -192,7 +366,14 @@ fn run(app: AppHandle, commands: Receiver<Command>, handle: Handle) {
                 was_active = false;
                 navigator = Navigator::default();
                 if let Some(pending) = capture.take() {
-                    let _ = pending.reply.send(Err("controller input is paused while the game runs".to_string()));
+                    let _ = pending
+                        .reply
+                        .send(Err("controller input is paused while the game runs".to_string()));
+                }
+                if let Some(pending) = wheel_capture.take() {
+                    let _ = pending
+                        .reply
+                        .send(Err("wheel input is paused while the game runs".to_string()));
                 }
             }
             continue;
@@ -200,6 +381,40 @@ fn run(app: AppHandle, commands: Receiver<Command>, handle: Handle) {
         was_active = true;
 
         pads.pump();
+
+        // 1. Wheel / Joystick enumeration, live telemetry & capture:
+        let wheel_infos = pads.connected_wheels();
+        let w_status = wheel_status_json(true, &wheel_infos, "");
+        if w_status != last_wheel_status {
+            publish_wheel(Some(&app), &handle, w_status.clone());
+            last_wheel_status = w_status;
+        }
+        if !wheel_infos.is_empty() {
+            let wheel_raw = pads.read_wheels();
+            let _ = app.emit("wheel-live", wheel_live_json(&wheel_raw));
+            let found_wheel = match wheel_capture.as_mut() {
+                None => None,
+                Some(pending) => match &pending.baseline {
+                    None => {
+                        pending.baseline = Some(wheel_raw);
+                        None
+                    }
+                    Some(baseline) => detect_wheel_capture(
+                        baseline,
+                        &wheel_raw,
+                        &pending.primary_guid,
+                        &pending.target,
+                    ),
+                },
+            };
+            if let Some(captured) = found_wheel {
+                if let Some(pending) = wheel_capture.take() {
+                    let _ = pending.reply.send(Ok(captured));
+                }
+            }
+        }
+
+        // 2. Gamepad enumeration, live telemetry, UI navigation & capture:
         let infos = pads.connected();
         let ids: Vec<u32> = infos.iter().map(|pad| pad.id).collect();
         let active_info = pad::active_pad(&ids).and_then(|id| infos.iter().find(|pad| pad.id == id));
@@ -262,13 +477,22 @@ mod tests {
         raw.left_y = i16::MIN;
         raw.right_x = i16::MAX;
         let live = live_json(&sample(&raw));
-        assert_eq!(live["sticks"]["left"]["y"], json!(-1.0), "SDL y is positive down: the most negative raw value is -1");
+        assert_eq!(
+            live["sticks"]["left"]["y"],
+            json!(-1.0),
+            "SDL y is positive down: the most negative raw value is -1"
+        );
         assert!((live["sticks"]["right"]["x"].as_f64().unwrap() - 1.0).abs() < 1e-9);
     }
 
     #[test]
     fn status_names_the_active_pad_and_counts_all_of_them() {
-        let pad = PadInfo { id: 3, name: "DualSense Wireless Controller".into(), kind: "ps5".into(), player_index: Some(0) };
+        let pad = PadInfo {
+            id: 3,
+            name: "DualSense Wireless Controller".into(),
+            kind: "ps5".into(),
+            player_index: Some(0),
+        };
         let status = status_json(true, 2, Some(&pad), "");
         assert_eq!(status["connected"], json!(true));
         assert_eq!(status["name"], json!("DualSense Wireless Controller"));
