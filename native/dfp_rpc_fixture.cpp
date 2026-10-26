@@ -1,4 +1,5 @@
 #include "dfp_rpc.hpp"
+#include "dfp_input.hpp"
 
 #include <array>
 #include <cstdint>
@@ -133,6 +134,45 @@ void test_ffb_packet_queue() {
   require(!server.poll_ffb(out_pkt), "Queue must now be empty");
 }
 
+void test_input_bridge_encoding() {
+  using namespace gt4::dfp;
+  // Center
+  const auto center = DfpInputBridge::encode_report(0.0f, 0.0f, 0.0f, 0, 0, true);
+  require(center.steering == kSteeringCenter, "Center steering must be 8192");
+  require(center.throttle == 0, "Zero throttle is 0");
+  require(center.brake == 0, "Zero brake is 0");
+
+  // Full right & full throttle
+  const auto full_right = DfpInputBridge::encode_report(1.0f, 1.0f, 0.0f, 0x1234, 4, true);
+  require(full_right.steering == kSteeringMax, "Full right steering is 16383");
+  require(full_right.throttle == 255, "Full throttle is 255");
+  require(full_right.brake == 0, "Brake is 0");
+  require(full_right.buttons == 0x1234, "Buttons mask preserved");
+  require(full_right.dpad == 4, "Dpad preserved");
+
+  // Full left & full brake
+  const auto full_left = DfpInputBridge::encode_report(-1.0f, 0.0f, 1.0f, 0, 0, true);
+  require(full_left.steering == 0, "Full left steering is 0");
+  require(full_left.throttle == 0, "Throttle is 0");
+  require(full_left.brake == 255, "Full brake is 255");
+
+  // Clamping outside bounds
+  const auto clamped = DfpInputBridge::encode_report(2.5f, 3.0f, -1.0f, 0, 0, true);
+  require(clamped.steering == kSteeringMax, "Clamped steering cannot exceed 16383");
+  require(clamped.throttle == 255, "Clamped throttle cannot exceed 255");
+  require(clamped.brake == 0, "Clamped brake cannot go below 0");
+
+  // Degrees to 14-bit
+  require(DfpInputBridge::degrees_to_raw_14bit(0.0f, 900.0f) == kSteeringCenter, "0 deg is center");
+  require(DfpInputBridge::degrees_to_raw_14bit(450.0f, 900.0f) == kSteeringMax, "450 deg is max");
+  require(DfpInputBridge::degrees_to_raw_14bit(-450.0f, 900.0f) == 0, "-450 deg is min");
+
+  // Disconnect handling
+  const auto disconnected = DfpInputBridge::encode_report(1.0f, 1.0f, 1.0f, 0xFFFF, 8, false);
+  require(!disconnected.connected, "Connected is false");
+  require(disconnected.steering == kSteeringCenter, "Disconnected centers steering for safety");
+}
+
 } // namespace
 
 int main() {
@@ -143,7 +183,8 @@ int main() {
     test_mode_and_range();
     test_input_poll_report();
     test_ffb_packet_queue();
-    std::printf("All DFP RPC fixture tests PASSED (6/6).\n");
+    test_input_bridge_encoding();
+    std::printf("All DFP RPC and Input Bridge fixture tests PASSED (7/7).\n");
     return 0;
   } catch (const std::exception &ex) {
     std::fprintf(stderr, "DFP RPC fixture FAILED: %s\n", ex.what());
