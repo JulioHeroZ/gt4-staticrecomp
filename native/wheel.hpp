@@ -130,6 +130,7 @@ inline constexpr std::array<ButtonSlotInfo, button_slot_count> button_slots{{
 struct WheelConfig {
   int version = 1;
   bool enabled = true;
+  bool native_dfp = false;
   std::string device_guid; // empty = auto-detect primary wheel
   std::string device_name;
   std::string preset = "generic";

@@ -687,6 +687,8 @@ WheelConfig parse_wheel_config(std::string_view text, const std::string &source_
           } else if (key == "pedal_map_mode") {
             config.pedal_map_mode =
                 parse_pedal_map_mode(unquote(value, source_name, line_no), source_name, line_no);
+          } else if (key == "native_dfp") {
+            config.native_dfp = parse_bool_token(value, source_name, line_no);
           } else {
             fail(source_name, line_no, "unknown [wheel] key '" + std::string(key) + "'");
           }
@@ -801,7 +803,10 @@ std::string serialize_wheel_config(const WheelConfig &config) {
   out << "device_guid = \"" << config.device_guid << "\"\n";
   out << "device_name = \"" << config.device_name << "\"\n";
   out << "preset = \"" << config.preset << "\"\n";
-  out << "pedal_map_mode = \"" << pedal_map_mode_name(config.pedal_map_mode) << "\"\n\n";
+  out << "pedal_map_mode = \"" << pedal_map_mode_name(config.pedal_map_mode) << "\"\n";
+  if (config.native_dfp)
+    out << "native_dfp = true\n";
+  out << "\n";
 
   out << "[steering]\n";
   out << "source = \"" << format_source_ref(config.steering.source) << "\"\n";
