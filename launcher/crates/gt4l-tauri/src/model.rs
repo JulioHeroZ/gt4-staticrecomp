@@ -282,6 +282,10 @@ fn trigger_row(trigger: &str, controls: &Controls, field: &str) -> Value {
                 { "value": "linear", "label": "Linear" },
                 { "value": "quadratic", "label": "Quadratic" },
                 { "value": "cubic", "label": "Cubic" },
+                { "value": "s_curve", "label": "S-Curve" },
+                { "value": "smooth_power", "label": "Smooth Power (x^1.5)" },
+                { "value": "sublinear", "label": "Sublinear (sqrt)" },
+                { "value": "logarithmic", "label": "Logarithmic" },
             ],
             "default": "linear",
             "current": tuning.curve.as_str(),
@@ -516,6 +520,10 @@ pub fn curve_from_name(name: &str) -> Option<Curve> {
         "linear" => Some(Curve::Linear),
         "quadratic" => Some(Curve::Quadratic),
         "cubic" => Some(Curve::Cubic),
+        "s_curve" | "scurve" | "s-curve" => Some(Curve::SCurve),
+        "smooth_power" | "smooth" => Some(Curve::SmoothPower),
+        "sublinear" | "root" => Some(Curve::Sublinear),
+        "logarithmic" | "log" => Some(Curve::Logarithmic),
         _ => None,
     }
 }

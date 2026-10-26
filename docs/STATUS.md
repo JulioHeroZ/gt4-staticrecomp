@@ -1,4 +1,18 @@
 # Current Status
+
+## TASK-120 external controller contribution integration (2026-10-25)
+
+Owner requested sequential acceptance of PR #100 (DualSense triggers), then PR #101 (racing wheels).
+PR #100 is isolated on `task/120-dualsense-integration`, based on main `90af154` after stable 1.2.4.
+Its TASKS-only conflict is resolved without dropping TASK-119 and its conflicting TASK-104 label
+is replaced by TASK-120. Review corrections retain standard SDL trigger semantics, remove unsupported
+signed-axis modes and keep the contributed response curves. Full native slice1200 build and focused CTest native_audio_input, native_controls and native_pad_mapping
+passed (3/3), including the actual production SDL adapter with virtual PS5/Xbox devices. New immutable
+`docs/inputs/slice1200-pcsx2.json` retains the slice1190 inputs and RA hashes. Full CTest/Python,
+Rust workspace and UI validation remain pending; actual controller hardware is unvalidated.
+No PR is accepted by this preparation record and no release is planned by this request.
+Preserve all 1.2.4 RetroAchievements fixes. See [integration mapping](PR-100-101-INTEGRATION.md).
+
 ## TASK-119 release 1.2.4: RetroAchievements (2026-10-25)
 
 Owner approved final stable 1.2.4 publication on 2026-10-25. The contributor commit is preserved.

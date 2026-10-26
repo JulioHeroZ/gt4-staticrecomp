@@ -1548,6 +1548,7 @@ there is no renderer download; switch back to PCSX2 and confirm its existing set
 This changes package management, not rendering fidelity, performance or CoreGS 2.0 readiness.
 
 
+
 ### TASK-119 — RetroAchievements release 1.2.4
 
 Owner decision 2026-10-25: integrate JulioHeroZ's PR #96 on the 1.2.3 code line, preserve authorship,
@@ -1568,3 +1569,34 @@ Acceptance: CTest, Python with the exact new build/pin, launcher workspace and U
 restoration after logout; bounded cancellation of a slow loopback HTTP request; installer/source identity;
 owner real-account login, unlock, overlay and save test. Later 1.3.0 integration must keep RA disabled for
 Spec II until its identity and achievement conditions are independently validated.
+
+### TASK-120 — Integrate PR #100: DualSense trigger range and response curves
+
+Owner request 2026-10-25: accept external PR #100 before PR #101, resolve integration conflicts,
+and validate each contribution separately. Contributor: luanantony (Luan Antony); original commits
+`b58024245253d548f3a8306e3eadc680bc547bd6` and `a36486d333c8fa23b89e1bddaa2404979b53dd87`.
+Worktree `C:\Antigravity\gt4-wt-120-dualsense-integration`, branch `task/120-dualsense-integration`,
+based on stable 1.2.4 main `90af154`.
+
+State: conflict resolution and review corrections prepared. Full slice1200 native build and focused
+CTest native_audio_input, native_controls and native_pad_mapping passed (3/3). Immutable
+`docs/inputs/slice1200-pcsx2.json` preserves slice1190 inputs and RA source hashes. Full CTest/Python,
+Rust workspace and UI checks remain pending; no merge or new release yet. The incoming task label TASK-104 was incorrect: that number belongs to save import
+on the 1.3.0 line. This contribution is tracked as TASK-120 and relates to planned controller tuning
+TASK-110; it does not mark that broader future task complete.
+
+Scope: preserve the contributed extended curves (s_curve, smooth_power, sublinear, logarithmic).
+The proposed signed-axis modes and device-name heuristics are removed after review: SDL3 Gamepad
+triggers already use 0..32767 for DualSense and Xbox alike. The unsupported raw-joystick mode was
+never in a released build; native and Rust reject it consistently. Existing controls remain compatible.
+Preserve the 1.2.4 RetroAchievements account, HTTP-cancellation and UI response guards.
+
+Acceptance: independently reviewed SDL3 normalization and mode semantics, shared Rust/native parser and
+writer compatibility, default and custom controller mapping regression fixtures, native CTest, Python
+against the new build, Rust workspace and Controls UI navigation checks. Actual DualSense USB/Bluetooth
+travel, reconnect and in-game pressure remain hardware checks; synthetic fixtures alone cannot prove them.
+Record observed results before marking acceptance complete. Integration only: no release assets, labels,
+installed application, owner card/save or active game session is changed. PR #101 begins only afterward.
+See `docs/PR-100-101-INTEGRATION.md` for the sequential mapping and acceptance limits.
+
+TASK-120 validation result (2026-10-25): CTest 43/43; Python 641 tests, 42 skipped; Rust 381 passed, 4 ignored; UI focus 114/114 and navigation 154/154, no JavaScript errors. Owner authorized sequential integration. Physical controller gameplay remains unvalidated; no release created.
