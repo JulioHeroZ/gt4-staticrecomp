@@ -66,6 +66,7 @@ set_tests_properties(native_vulkan_async_stress_compare PROPERTIES DEPENDS
 add_test(NAME native_audio_input COMMAND $<TARGET_FILE:host_io_fixture>)
 add_test(NAME native_controls COMMAND $<TARGET_FILE:controls_fixture>)
 add_test(NAME native_pad_mapping COMMAND $<TARGET_FILE:pad_mapping_fixture>)
+add_test(NAME native_dfp_rpc COMMAND $<TARGET_FILE:dfp_rpc_fixture>)
 add_test(NAME native_pacing COMMAND $<TARGET_FILE:pacing_fixture>)
 add_test(NAME native_achievements COMMAND $<TARGET_FILE:achievements_fixture>)
 add_test(NAME native_achievements_http COMMAND $<TARGET_FILE:achievements_http_fixture>)
