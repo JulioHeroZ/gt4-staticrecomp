@@ -288,6 +288,7 @@ pub fn prepare_play(shared: &Shared, program_dir: &Path) -> Result<PlayInputs, S
     let wheel_path = state.user_dirs.wheel_file();
     if wheel_path.exists() {
         extra.push(("GT4_WHEEL_FILE".into(), wheel_path.display().to_string()));
+        extra.push(("GT4_INPUT".into(), "xinput".into()));
     }
     let ra_cfg = gt4l_core::retroachievements::RaConfig::load(&state.user_dirs.retroachievements_file());
     for (key, value) in ra_cfg.launch_environment(&dirs.retroachievements_cache()) {
