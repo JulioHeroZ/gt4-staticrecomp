@@ -93,3 +93,14 @@ The reviewed contribution targets the stable **1.2.5** line after 1.2.4. It pres
 controller curves and RetroAchievements fixes. A later port is planned for **1.3.0-rc7**, preserving
 frame skipping and keeping RetroAchievements disabled for Spec II. No published release asset is
 replaced by the source integration.
+
+## Native DFP direction (owner, 2026-10-26)
+
+This document describes the existing adapted-input subset, not the intended final native wheel
+system. The guest reference is **Driving Force Pro (DFP)**, not Driving Force GT (DFGT). Existing
+physical-device preset names such as `logitech_dfgt` remain valid and are not renamed.
+Native DFP recognition, 900-degree steering and game-generated force feedback bridged to SDL3
+are planned for **1.3.1**, after research in TASK-123. 1.3.0 remains focused on Spec II/performance.
+The owner holds the 1.2.5 draft from publication. The earlier forward-port wording above is not
+a requirement to expose adapted wheel input in rc7; reusable components need the native plan's review.
+See [research brief](tasks/TASK-123-DFP-WHEEL-RESEARCH.md).

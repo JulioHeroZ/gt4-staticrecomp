@@ -57,7 +57,7 @@ See [GS renderer options](docs/GS-RENDERER-OPTIONS.md) and [GSDX-PLAN](docs/GSDX
 | TASK‑015 | LWR sign-extension fidelity check | ✅ Done (already correct; no change) |
 | TASK‑016 | IOP per-module cost counters and review | ⏸️ Deferred (not needed for 1.0.0) |
 | TASK‑017 | License-test crash | ✅ Done (2026-10-16) · license demo guard on both demo loaders (slice206, `--mode pcsx2`): licenses playable, demos that decrypt wrong are skipped as in PCSX2 default; root cause moved to TASK‑063 |
-| TASK‑018 | Universal configurable racing wheel support (`wheel.toml`, multi-device SDL3 joystick/pedals/shifter/handbrake, 5 pedal axis polarities, steering lock & linearity, FFB/haptics, Launcher Racing Wheel configurator) | 🧪 Waiting for owner test (`task/018-racing-wheels`, docs/WHEEL.md) |
+| TASK‑018 | Native Driving Force Pro (DFP): 900-degree steering, game-generated force feedback bridged to SDL3, wheel configuration | 📋 Planned for 1.3.1; TASK-123 research brief ready; TASK-121 host-input groundwork is partial |
 | TASK‑019 | Launcher 1.0.0 (Rust core + Tauri 2 HTML frontend) and NSIS per-user installer | ✅ Launcher merged into main (2026-10-21): setup with disc copy, gt4-gs download, settings, saves, controls (SDL3), tray, updates; owner tested end to end. Still for 1.0.0: NSIS installer build and the v1.0.0 release |
 | TASK‑020 | Decomp names in generated EE code (waits for more decompilation progress) | 📋 Planned |
 | TASK‑025 | Save manager: memory card slots, import/export | ✅ Code done, merged into `task/019-launcher`; ships with the launcher (owner test pending) |
@@ -830,15 +830,21 @@ Owner decisions (2026-10-21). Release 1.2.0 of both the game/launcher and gt4-gs
 ### TASK-018 — Racing wheels
 High-level emulation at the PDIUSB boundary with SDL3 wheels and force feedback
 (docs/MENUS-AND-WHEEL.md). Builds on the TASK-075 SDL3 input layer.
-Release 1.4.0 (owner, 2026-10-23; was 1.3.0 before Spec II moved ahead): the game must recognise the connected wheel as a Logitech Driving Force GT
+Planned for 1.3.1 (owner update, 2026-10-26; previously 1.4.0): the game must recognise the connected wheel as a Logitech Driving Force Pro (DFP)
 (900-degree range and force feedback in GT4), whatever wheel SDL3 finds (Logitech, Thrustmaster, Fanatec); the
 game's force-feedback commands go to SDL3 haptics. The launcher gets a new Wheel tab (detection, rotation, force
 feedback strength, pedals and buttons, a live test). Study first: the GT4 USB stack (USBD, PDIUSB, LGDEV IRX,
-docs/IOP-MAP.md), where to answer as a DFGT, and the force-feedback command set.
+docs/IOP-MAP.md), where to answer as a DFP, and the force-feedback command set.
 
-Owner update 2026-10-26: the configurable host-input subset is implemented by TASK-121 for
-1.2.5, then rc7. The guest USB/Logitech identity and force-feedback protocol described above
-remain future acceptance; this contribution does not mark that complete.
+Owner scope update 2026-10-26: the virtual target is Driving Force Pro (DFP), not DFGT.
+Native 900-degree steering and game-generated wheel force feedback are planned for 1.3.1;
+1.3.0 stays focused on Spec II and performance. TASK-123 prepares research and an implementation
+plan only. The private 1.2.5 draft is held back from publication; existing input contributions remain
+in main as reusable groundwork and are not proof of native wheel support.
+
+Host-input groundwork was merged through TASK-121 and packaged in the private 1.2.5 draft.
+Publication is now on hold. The guest USB/Logitech identity and native force-feedback protocol
+remain future acceptance for 1.3.1; this contribution does not complete TASK-018.
 
 ### TASK-075 — Input layer on SDL3
 Owner decision 2026-10-21. Replace the game's XInput-only pad code (native/host_io.cpp) with one input layer on
@@ -1487,7 +1493,7 @@ LAN-over-internet and an online lobby launcher (docs/ONLINE-NOTES.md), in-game
 settings menus.
 
 **Release plan (owner, 2026-10-22):** big features take a minor version, intermediate updates and hotfixes the
-patch number: 1.2.3 hotfix, 1.2.4 (TASK-097, 098, 099), 1.3.0 Spec II (TASK-100, on GSdx), 1.4.0 wheels (TASK-018) (owner, 2026-10-23: Spec II moved ahead);
+patch number: 1.2.3 hotfix, 1.2.4 (TASK-097, 098, 099), 1.3.0 Spec II (TASK-100, on GSdx), 1.3.1 native DFP wheels (TASK-018; owner update 2026-10-26);
 2.0.0 is CoreGS 2.0 (phase 2).
 
 **Spec II is a second target** (owner, 2026-10-22): support means the SCUS-97436
@@ -1629,3 +1635,22 @@ Existing RetroAchievements protections and TASK-120 controller curves/standardiz
 See docs/WHEEL.md and docs/PR-100-101-INTEGRATION.md. No new release is built or published here;
 1.2.4 remains Latest. The later rc7 port must keep RA disabled for Spec II and pass both-game,
 frame-skipping, input and language gates without replacing published rc6 assets.
+
+### TASK-122 — Release 1.2.5 private draft (reserved on release branch)
+
+Packaging is recorded on task/122-release-125 at 70aa363, without a main source merge. Draft v1.2.5
+remains private; owner update 2026-10-26 puts publication on hold in favor of the native DFP plan.
+This reservation prevents reusing TASK-122 while its release branch is open.
+
+### TASK-123 — Native DFP wheel research and implementation plan
+
+State 2026-10-26: research brief ready for an owner-run OpenCode agent; research not started.
+Parent TASK-018, planned release 1.3.1. The virtual guest target is Logitech Driving Force Pro
+(DFP), 900-degree steering, original game-generated force feedback translated to SDL3.
+The launcher/host SDL3 configuration from TASK-121 is reusable groundwork, not the guest protocol.
+Branch task/123-dfp-wheel-study; worktree C:\Antigravity\gt4-wt-123-dfp-wheel-study.
+Brief: docs/tasks/TASK-123-DFP-WHEEL-RESEARCH.md. Study both USA v2.00 and Spec II independently.
+Deliver an evidence-backed device/protocol map, HLE-versus-USB boundary analysis, reuse audit,
+FFB effect coverage and staged implementation/test plan. No implementation, build, game launch,
+physical force test, release or integration into active rc7 work is authorized by this research.
+The owner starts the economical research agent in OpenCode; Codex reviews its deliverables.
