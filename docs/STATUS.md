@@ -1,5 +1,25 @@
 # Current Status
 
+## TASK-131: restore the 1.2.4 program baseline (2026-10-26)
+
+Owner requested shelving the existing private 1.2.5 wheel build, returning main's program
+sources to published v1.2.4, and later preparing a new 1.2.5 with controller improvements only.
+All tracked files outside docs/, TASKS.md and README.md are restored directly from tag v1.2.4
+(ad46df65c03894ed204beafbd02819a11e4037bc). Git blob identity is the validation for this mechanical
+restoration; no code is authored, rebuilt or newly hardware-tested. Existing RetroAchievements
+fixes stay exactly as released in 1.2.4. Documentation and historical manifests remain available.
+
+The original contributions and reviewed integrations remain in history: controller PR #100 via
+#106 (8b73fa0), wheel PR #101/#109 via #111 (cbfd8b8). Reintroduce only the reviewed controller
+changes in a separate future task, with a fresh build/pins and acceptance. Do not assume a merged
+PR can simply be merged again after restoration. No current wheel bridge enters that release.
+The existing v1.2.5 stays an unpublished, superseded draft; v1.2.4 remains public Latest.
+
+Native DFP is still planned under TASK-018, with TASK-123 research; no native protocol backend
+exists yet. Owner-authorized reply to JulioHeroZ: PR #101 comment 6422692723, requesting native
+DFP recognition / game-generated FFB through SDL3 and linking both tasks verified on main.
+This entry supersedes earlier descriptions of the controller/wheel integrations as current code.
+
 ## Open issue task intake registered (2026-10-26)
 
 All 14 open issues map to existing tasks or newly recorded TASK-124..130; see ISSUE-TRIAGE.md.

@@ -228,11 +228,6 @@
   same("trigger output: at the deadzone it is 0", CM.triggerOutput(30 / 255, 30 / 255, "linear"), 0);
   same("trigger output: the integer formula of native/controls.cpp", CM.triggerOutput(128 / 255, 30 / 255, "linear"), Math.floor((98 * 255) / 225) / 255);
   same("trigger output: cubic at half travel", Math.round(CM.triggerOutput(0.5, 0, "cubic") * 1000), 125);
-  // Half travel rounds to raw byte 128; native/controls.cpp floors the shaped pressure byte.
-  same("trigger output: s-curve quantized half travel", CM.triggerOutput(0.5, 0, "s_curve"), 128 / 255);
-  same("trigger output: smooth power quantized half travel", CM.triggerOutput(0.5, 0, "smooth_power"), 90 / 255);
-  same("trigger output: sublinear quantized half travel", CM.triggerOutput(0.5, 0, "sublinear"), 180 / 255);
-  same("trigger output: logarithmic quantized half travel", CM.triggerOutput(0.5, 0, "logarithmic"), 189 / 255);
 
   same("KeyZ is Z", CM.keyFromEvent({ code: "KeyZ", key: "z" }), { name: "Z" });
   same("Digit1 is 1", CM.keyFromEvent({ code: "Digit1", key: "1" }), { name: "1" });
@@ -289,26 +284,6 @@
   same("L3 right is R3", padMove("l3", "right"), "r3");
   same("Triangle up is R1", padMove("triangle", "up"), "r1");
   same("Circle right leaves the drawing (the panel is next)", padMove("circle", "right"), null);
-
-  var wm = root.GT4.wheelModel;
-  var wd = {id:1,guid:"wheel",is_wheel:true,axes:[1234,-25000],buttons:[true,false],hats:[3]};
-  var other = {id:2,guid:"other",is_wheel:false,is_gamepad:true,axes:[30000],buttons:[false],hats:[0]};
-  expect("wheel primary axis is read from the selected physical device",wm.readSourceAxis("axis:0",[wd,other],"wheel"),1234);
-  expect("missing wheel GUID cannot fall back to another axis",wm.readSourceAxis("dev:missing:axis:0",[other],""),null);
-  expect("generic gamepad is not an automatic wheel",wm.readSourceAxis("axis:0",[other],""),null);
-  expect("duplicate GUID is neutral",wm.readSourceAxis("axis:0",[wd,Object.assign({},wd,{id:3})],"wheel"),null);
-  expect("disconnected inverted pedal output is zero",wm.pedal({mode:"inverted"},null).out,0);
-  expect("disconnected normal pedal output is zero",wm.pedal({mode:"normal"},null).out,0);
-  expect("raw button highlights without synthetic active_sources",wm.sourcePressed("btn:0",[wd],"wheel"),true);
-  expect("qualified hat reads actual bits",wm.sourcePressed("dev:wheel:hat:0:right",[wd],""),true);
-  expect("signed negative axis binding highlights",wm.sourcePressed("axis:1-",[wd],"wheel"),true);
-  expect("opposite axis direction stays unpressed",wm.sourcePressed("axis:1+",[wd],"wheel"),false);
-  expect("legacy bare axis matches native digital semantics",wm.sourcePressed("axis:1",[wd],"wheel"),true);
-  expect("missing button GUID cannot highlight another device",wm.sourcePressed("dev:missing:btn:0",[wd],""),false);
-  expect("all disconnected wheel buttons are neutral",wm.sourcePressed("btn:0",[],"wheel"),false);
-
-  expect("digital pedal button displays full pressure",wm.readPedal({source:"dev:wheel:btn:0"},[wd],"").out,1);
-  expect("missing digital pedal is neutral",wm.readPedal({source:"dev:missing:btn:0"},[wd],"").out,0);
 
   function run() {
     var list = document.getElementById("results");

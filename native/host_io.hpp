@@ -23,9 +23,6 @@ using PadState = gt4::pad::PadState;
 // SDL3 gamepad handle (SDL_gamepad.h); the header is kept out of this file.
 struct SDL_Gamepad;
 
-// One standardized SDL3 gamepad reading, shared by live polling and the virtual-device fixture.
-gt4::pad::GamepadReading read_sdl_gamepad(SDL_Gamepad *gamepad);
-
 // Maps one XInput state through the binding table. The default-argument overload
 // uses controls::default_controls(), which equals the slice 157 mapping.
 PadState map_gamepad(const XINPUT_GAMEPAD &gamepad, const gt4::controls::ControlMap &map);
@@ -44,12 +41,8 @@ public:
   ControllerInput &operator=(const ControllerInput &) = delete;
   PadState poll(bool focused, std::uint16_t keyboard_buttons);
   void rumble(std::uint16_t value);
-  // Instance IDs owned by the enabled wheel subsystem must not be read twice as gamepads.
-  void set_excluded_devices(std::vector<std::uint32_t> ids);
   void stop();
-  gt4::pad::Backend backend() const {
-    return excluded_devices_.empty() ? backend_ : gt4::pad::Backend::sdl;
-  }
+  gt4::pad::Backend backend() const { return backend_; }
 
 private:
   PadState poll_xinput(bool focused);
@@ -57,8 +50,6 @@ private:
   void rumble_xinput(std::uint16_t value);
   void rumble_sdl(std::uint16_t value);
   void close_sdl_pad();
-  void ensure_sdl();
-  std::vector<std::uint32_t> excluded_devices_;
 
   gt4::controls::ControlMap map_;
   gt4::pad::Backend backend_;

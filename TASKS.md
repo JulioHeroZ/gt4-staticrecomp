@@ -1735,3 +1735,23 @@ Report: split-screen resolution/quality concern; the reporter supplied the reque
 Priority: backlog, owner to select release priority. The old split-screen concern had no task number.
 Related: 4:3 stays with TASK-080/TASK-079. Broader two-controller support remains the existing future
 idea; this display intake does not silently schedule it.
+
+
+### TASK-131 — Restore main to the released 1.2.4 program baseline
+
+State: completed source restoration, owner-directed (2026-10-26).
+Branch: task/131-restore-124. Restores program files directly from v1.2.4 / ad46df6;
+preserves documentation and historical input pins. Git blob identity against that tag is
+the validation; no build, hardware test, release or owner-data modification is performed.
+
+Owner shelves the existing private 1.2.5 wheel draft. Public Latest stays 1.2.4. A future
+1.2.5 will reintroduce only reviewed controller improvements from PR #100/#106 (8b73fa0),
+with fresh packaging and acceptance; do not reintroduce the current wheel bridge.
+This supersedes TASK-120/121 entries describing those changes as active on main and the
+TASK-122 draft as a publication candidate. All contribution commits/authorship remain in
+history (wheel integration cbfd8b8); native DFP remains TASK-018 with research TASK-123.
+
+Contributor reply: https://github.com/moesuito/gt4-staticrecomp/pull/101#issuecomment-6422692723
+TASK-018 and the TASK-123 brief were verified on main before linking. Requested native DFP
+recognition (900 degrees) and original wheel FFB through SDL3, not pad-state/rumble adaptation.
+No native wheel backend is claimed to exist, no new feature implementation dispatched.
