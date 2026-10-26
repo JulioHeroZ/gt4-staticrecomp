@@ -13,5 +13,6 @@ pub mod pad;
 pub mod process;
 pub mod recycle;
 pub mod sdl_pads;
+pub mod sdl_wheels;
 pub mod system;
 pub mod webview2;
