@@ -1,5 +1,6 @@
 #include "dfp_rpc.hpp"
 #include "dfp_input.hpp"
+#include "dfp_ffb.hpp"
 
 #include <array>
 #include <cstdint>
@@ -173,6 +174,81 @@ void test_input_bridge_encoding() {
   require(disconnected.steering == kSteeringCenter, "Disconnected centers steering for safety");
 }
 
+void test_ffb_packet_decoding() {
+  using namespace gt4::dfp;
+
+  // Constant force: +127 -> ~1.0f
+  DfpFfbPacket p_const{};
+  p_const.data[0] = 0x00;
+  p_const.data[1] = 127;
+  const auto e_const = DfpFfbEngine::decode_packet(p_const);
+  require(e_const.type == FfbEffectType::ConstantForce, "Command 0x00 is ConstantForce");
+  require(e_const.constant_level > 0.99f && e_const.constant_level <= 1.0f, "Max positive constant force");
+
+  // Constant force: -128 -> -1.0f
+  p_const.data[1] = static_cast<std::uint8_t>(-128);
+  const auto e_const_neg = DfpFfbEngine::decode_packet(p_const);
+  require(e_const_neg.constant_level == -1.0f, "Max negative constant force is clamped to -1.0");
+
+  // Spring: deadband 25/255, k_left 200/255, k_right 100/255
+  DfpFfbPacket p_spring{};
+  p_spring.data[0] = 0x02;
+  p_spring.data[1] = 25;
+  p_spring.data[2] = 200;
+  p_spring.data[3] = 100;
+  const auto e_spring = DfpFfbEngine::decode_packet(p_spring);
+  require(e_spring.type == FfbEffectType::Spring, "Command 0x02 is Spring");
+  require(e_spring.spring_deadband > 0.09f && e_spring.spring_deadband < 0.11f, "Deadband matched");
+  require(e_spring.spring_strength > 0.77f && e_spring.spring_strength < 0.79f, "Spring strength matched");
+
+  // Damper: damper 128/255, friction 64/255
+  DfpFfbPacket p_damper{};
+  p_damper.data[0] = 0x03;
+  p_damper.data[1] = 128;
+  p_damper.data[2] = 64;
+  const auto e_damper = DfpFfbEngine::decode_packet(p_damper);
+  require(e_damper.type == FfbEffectType::Damper, "Command 0x03 is Damper");
+  require(e_damper.damper_strength > 0.49f && e_damper.damper_strength < 0.51f, "Damper strength matched");
+  require(e_damper.friction_strength > 0.24f && e_damper.friction_strength < 0.26f, "Friction strength matched");
+
+  // Stop All: 0x0B
+  DfpFfbPacket p_stop{};
+  p_stop.data[0] = 0x0B;
+  const auto e_stop = DfpFfbEngine::decode_packet(p_stop);
+  require(e_stop.type == FfbEffectType::StopAll, "Command 0x0B is StopAll");
+  require(e_stop.stop_all, "Stop all flag set");
+}
+
+void test_ffb_engine_mock_dispatch() {
+  using namespace gt4::dfp;
+
+  DfpFfbEngine engine;
+  require(!engine.is_attached(), "Starts unattached (mock mode)");
+
+  // Process constant force
+  DfpFfbPacket p1{};
+  p1.data[0] = 0x00;
+  p1.data[1] = 64; // ~0.5f
+  engine.process_packet(p1);
+  require(engine.processed_packets_count() == 1, "One packet processed");
+  require(engine.last_effect().constant_level > 0.49f && engine.last_effect().constant_level < 0.52f, "Level ~0.5f");
+
+  // Drain from RPC server
+  DfpRpcServer server;
+  std::array<std::uint8_t, 8> ffb_cmd{0x03, 100, 50, 0, 0, 0, 0, 0};
+  std::array<std::uint8_t, 16> reply{};
+  server.dispatch(static_cast<std::uint32_t>(RpcFunction::FfbCommand), ffb_cmd, reply);
+
+  engine.drain_rpc_queue(server);
+  require(engine.processed_packets_count() == 2, "Second packet processed from RPC queue");
+  require(engine.last_effect().type == FfbEffectType::Damper, "Damper effect active");
+
+  // Test fail-safe stop
+  engine.stop();
+  require(engine.last_effect().constant_level == 0.0f, "Force zeroed on stop");
+  require(engine.last_effect().stop_all, "Stop all active");
+}
+
 } // namespace
 
 int main() {
@@ -184,7 +260,9 @@ int main() {
     test_input_poll_report();
     test_ffb_packet_queue();
     test_input_bridge_encoding();
-    std::printf("All DFP RPC and Input Bridge fixture tests PASSED (7/7).\n");
+    test_ffb_packet_decoding();
+    test_ffb_engine_mock_dispatch();
+    std::printf("All DFP RPC, Input Bridge, and FFB Engine fixture tests PASSED (9/9).\n");
     return 0;
   } catch (const std::exception &ex) {
     std::fprintf(stderr, "DFP RPC fixture FAILED: %s\n", ex.what());
