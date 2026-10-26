@@ -79,10 +79,16 @@ pub struct FfbConfig {
     pub invert: bool,
 }
 
+fn default_true() -> bool {
+    true
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct WheelConfig {
     pub version: i32,
     pub enabled: bool,
+    #[serde(default = "default_true")]
+    pub native_dfp: bool,
     pub device_guid: String,
     pub device_name: String,
     pub preset: String,
@@ -128,6 +134,7 @@ impl WheelConfig {
         let mut cfg = WheelConfig {
             version: 1,
             enabled: true,
+            native_dfp: true,
             device_guid: String::new(),
             device_name: String::new(),
             preset: if name.is_empty() { "generic".into() } else { name.into() },
@@ -328,6 +335,7 @@ impl WheelConfig {
         out.push_str("[wheel]\n");
         out.push_str(&format!("version = {}\n", self.version));
         out.push_str(&format!("enabled = {}\n", self.enabled));
+        out.push_str(&format!("native_dfp = {}\n", self.native_dfp));
         out.push_str(&format!("device_guid = \"{}\"\n", sanitize_str(&self.device_guid)));
         out.push_str(&format!("device_name = \"{}\"\n", sanitize_str(&self.device_name)));
         out.push_str(&format!("preset = \"{}\"\n", sanitize_str(&self.preset)));
@@ -418,6 +426,7 @@ impl WheelConfig {
                         seen_version = true;
                     }
                     "enabled" => cfg.enabled = parse_bool(val, line_no)?,
+                    "native_dfp" => cfg.native_dfp = parse_bool(val, line_no)?,
                     "device_guid" => cfg.device_guid = unquote(val, line_no)?.to_ascii_lowercase(),
                     "device_name" => cfg.device_name = unquote(val, line_no)?.to_string(),
                     "preset" => cfg.preset = unquote(val, line_no)?.to_string(),
@@ -521,10 +530,13 @@ impl WheelConfig {
     /// Updates a single setting key (e.g. `"wheel.enabled"`, `"steering.rotation_degrees"`, `"throttle.mode"`, `"ffb.strength"`).
     pub fn set_setting(&mut self, key: &str, value: &serde_json::Value) -> Result<(), String> {
         match key {
-            "wheel.enabled" => {
+            "enabled" | "wheel.enabled" => {
                 self.enabled = value.as_bool().ok_or("expected boolean for wheel.enabled")?;
             }
-            "wheel.device_guid" => {
+            "native_dfp" | "wheel.native_dfp" => {
+                self.native_dfp = value.as_bool().ok_or("expected boolean for wheel.native_dfp")?;
+            }
+            "device_guid" | "wheel.device_guid" => {
                 self.device_guid = value
                     .as_str()
                     .ok_or("expected string for wheel.device_guid")?

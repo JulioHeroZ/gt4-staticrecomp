@@ -2473,6 +2473,16 @@
 
       );
 
+      profileBox.appendChild(
+
+        makeToggleRow("Native Driving Force Pro (900° & FFB)", cfg.native_dfp !== false, function (v) {
+
+          updateSetting("native_dfp", v);
+
+        })
+
+      );
+
 
 
       var deviceOpts = [{ value: "", label: "Auto-detect Primary Wheel" }];
