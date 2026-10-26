@@ -2,13 +2,14 @@
 
 ## Native DFP wheel scope and research (2026-10-26)
 
-Owner corrected the guest model to Logitech Driving Force Pro (DFP), 900-degree steering with
-GT4-generated wheel force feedback translated to SDL3. Planned release 1.3.1; 1.3.0 stays focused
-on Spec II and performance. TASK-123 research brief is ready for an owner-run OpenCode agent,
-not dispatched and not implemented. See docs/tasks/TASK-123-DFP-WHEEL-RESEARCH.md.
-Existing PR #101/#109 host-input work remains in main as reusable groundwork; TASK-018 is incomplete.
-The 1.2.5 draft stays private, publication on hold. No release, native source, active rc7 worktree
-or owner data is changed by this documentation update. TASK-122 remains reserved on its release branch.
+TASK-123 research study completed in docs/research/DFP-WHEEL-STUDY.md for planned release 1.3.1.
+Target is native Logitech Driving Force Pro (DFP), 900-degree linear steering and physics-generated
+wheel force feedback translated to SDL3. High-Level Emulation (HLE) at SIF RPC Server 0x046D046D (liblgdev)
+selected to satisfy guest retail handshakes (RPC 12 status 0x010B2400, RPC 4 signature 0x046DC298)
+without low-level OHCI USB controller emulation.
+Evidence tables A-G delivered covering protocol contracts, 8-byte FFB mapping (constant, spring, damper),
+component reuse, negative controls, lifecycle safety and 5 implementation packages.
+Existing host SDL3 configuration from TASK-121 is retained as reusable groundwork; awaits owner review.
 
 
 ## TASK-121 configurable wheel integration for 1.2.5 (2026-10-26)

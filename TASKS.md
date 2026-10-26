@@ -57,7 +57,7 @@ See [GS renderer options](docs/GS-RENDERER-OPTIONS.md) and [GSDX-PLAN](docs/GSDX
 | TASK‑015 | LWR sign-extension fidelity check | ✅ Done (already correct; no change) |
 | TASK‑016 | IOP per-module cost counters and review | ⏸️ Deferred (not needed for 1.0.0) |
 | TASK‑017 | License-test crash | ✅ Done (2026-10-16) · license demo guard on both demo loaders (slice206, `--mode pcsx2`): licenses playable, demos that decrypt wrong are skipped as in PCSX2 default; root cause moved to TASK‑063 |
-| TASK‑018 | Native Driving Force Pro (DFP): 900-degree steering, game-generated force feedback bridged to SDL3, wheel configuration | 📋 Planned for 1.3.1; TASK-123 research brief ready; TASK-121 host-input groundwork is partial |
+| TASK‑018 | Native Driving Force Pro (DFP): 900-degree steering, game-generated force feedback bridged to SDL3, wheel configuration | 📋 Planned for 1.3.1; TASK-123 research complete (docs/research/DFP-WHEEL-STUDY.md) |
 | TASK‑019 | Launcher 1.0.0 (Rust core + Tauri 2 HTML frontend) and NSIS per-user installer | ✅ Launcher merged into main (2026-10-21): setup with disc copy, gt4-gs download, settings, saves, controls (SDL3), tray, updates; owner tested end to end. Still for 1.0.0: NSIS installer build and the v1.0.0 release |
 | TASK‑020 | Decomp names in generated EE code (waits for more decompilation progress) | 📋 Planned |
 | TASK‑025 | Save manager: memory card slots, import/export | ✅ Code done, merged into `task/019-launcher`; ships with the launcher (owner test pending) |
@@ -1644,13 +1644,11 @@ This reservation prevents reusing TASK-122 while its release branch is open.
 
 ### TASK-123 — Native DFP wheel research and implementation plan
 
-State 2026-10-26: research brief ready for an owner-run OpenCode agent; research not started.
+State 2026-10-26: ✅ Research and implementation plan completed (docs/research/DFP-WHEEL-STUDY.md).
 Parent TASK-018, planned release 1.3.1. The virtual guest target is Logitech Driving Force Pro
 (DFP), 900-degree steering, original game-generated force feedback translated to SDL3.
-The launcher/host SDL3 configuration from TASK-121 is reusable groundwork, not the guest protocol.
-Branch task/123-dfp-wheel-study; worktree C:\Antigravity\gt4-wt-123-dfp-wheel-study.
-Brief: docs/tasks/TASK-123-DFP-WHEEL-RESEARCH.md. Study both USA v2.00 and Spec II independently.
-Deliver an evidence-backed device/protocol map, HLE-versus-USB boundary analysis, reuse audit,
-FFB effect coverage and staged implementation/test plan. No implementation, build, game launch,
-physical force test, release or integration into active rc7 work is authorized by this research.
-The owner starts the economical research agent in OpenCode; Codex reviews its deliverables.
+High-Level Emulation (HLE) at SIF RPC Server 0x046D046D (liblgdev) selected as the target
+boundary, satisfying the retail handshake (RPC 12 status 0x010B2400, RPC 4 signature 0x046DC298).
+Evidence tables A-G delivered covering protocol contracts, 8-byte FFB mapping (constant, spring,
+damper), component reuse, negative controls, lifecycle safety and 5 implementation packages.
+Awaits owner/Codex review before proceeding to Package 2 (SIF RPC provider).
