@@ -9,7 +9,8 @@ Fresh slice1210 built and passed CTest 44/44, Python 641 tests (42 skipped), Rus
 (4 ignored), UI focus 114/114 and navigation 169/169 with no JavaScript errors. Recorded real
 wheel UI calls passed replay through Rust. Both independent static reviews approved the result.
 
-Ready for owner-authorized source merge. Target is 1.2.5, then a forward-port to 1.3.0-rc7 with
+Merged through PR #111 at main cbfd8b8 on 2026-10-26; original #101 and #109 also merged.
+Target is 1.2.5, then a forward-port to 1.3.0-rc7 with
 frame skipping and RA disabled for Spec II. No release publication or 1.3.0 worktree change here.
 Current Latest remains 1.2.4; rc6 remains public. Hardware gameplay and actual force-feedback
 quality remain unvalidated. Guest wheel USB protocol, direct gears, clutch and active damper/

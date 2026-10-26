@@ -128,3 +128,5 @@ Future rc7 acceptance must preserve EE/IOP fixed timing and the frame-skip decis
 and wheel routing with both game targets, keep RA off for Spec II, and integrate en-US/pt-BR UI
 strings into the modern launcher. It is a separate source port after this integration, not a reuse
 of the old launcher or a replacement of published rc6 assets.
+
+Completion: step 1 merged as #106/main8b73fa0, original #100 merged. Step 2 merged as #111/maincbfd8b8, original #101 and #109 merged with both latest heads preserved. Stable1.2.5 packaging and the modern rc7 source port remain subsequent work; published1.2.4 and rc6 assets are unchanged.

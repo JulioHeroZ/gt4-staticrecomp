@@ -1614,7 +1614,8 @@ merged through #106 at main8b73fa0. PR #101 by JulioHeroZ now ends at
 `6da047cf5ca9829224ade13dd84e9c797129bdf8`; PR #109 by luanantony contributes conflict-resolution
 commit `99f8dc48f6f6fc9ecfc0421bf0e75758203ea6bf`. Both histories are preserved by integration.
 
-State: implementation and automated acceptance complete, owner-authorized merge pending.
+State: complete and merged on 2026-10-26 through PR #111 at main cbfd8b8.
+Original PR #101 (latest head) and PR #109 are also marked merged.
 Three original conflicts are resolved. Independent native and Rust/UI static reviews approved
 routing, opt-in defaults, unique physical identity, full haptic stop, capture and UI/backend contracts.
 Fresh slice1210 build/pin: CTest 44/44, Python 641 tests (42 skipped), Rust workspace 391 passed
