@@ -1755,3 +1755,24 @@ Contributor reply: https://github.com/moesuito/gt4-staticrecomp/pull/101#issueco
 TASK-018 and the TASK-123 brief were verified on main before linking. Requested native DFP
 recognition (900 degrees) and original wheel FFB through SDL3, not pad-state/rumble adaptation.
 No native wheel backend is claimed to exist, no new feature implementation dispatched.
+
+
+### TASK-132 — Publish controller-only 1.2.5 from the reviewed PR #100 integration
+
+Owner request 2026-10-26: replace the private wheel-containing 1.2.5 draft with a final
+controller-only 1.2.5, after review and checks. Branch task/132-release-125-controls starts
+from main749af82 and reapplies exact program blobs from reviewed integration8b73fa0
+(PR #100 via #106), before wheel integration. No Git history is rewritten.
+
+State: controller-only release verified; owner authorized final publication after passing checks. Only launcher,
+workspace lockfile, Tauri metadata and installer version change beyond that reviewed code.
+Native game reuses immutable slice1200-pcsx2.json; fresh distribution slice1320-controls125-dist.
+No wheel implementation or wheel UI is included; native DFP remains TASK-018 / research123.
+RetroAchievements1.2.4 is retained. Legacy English UI exception remains owner-authorized;
+matching en-US/pt-BR short notes precede the launcher build. Installer-only legacy release.
+
+Observed checks: CTest43/43, Python641 tests/24 skipped, Rust381 passed/4 ignored, UI focus114/114
+and navigation154/154 with no script errors. Official launcher build/path scan and installer
+extraction/hash comparison passed. Publication follows the owner-authorized final release step.
+No new physical controller, account-unlock or installer execution validation is claimed.
+This supersedes the held TASK-122 wheel release candidate; keep its historical branch intact.
