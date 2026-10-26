@@ -1,5 +1,24 @@
 # Current Status
 
+## TASK-132: verified controller-only 1.2.5 (2026-10-26)
+
+Owner authorized replacing the private wheel draft and publishing a final1.2.5 after checks.
+Branch task/132-release-125-controls reapplies exact reviewed controller integration8b73fa0
+(PR #100/#106) over main749af82, with only version/packaging changes beyond that program code.
+Wheel source, commands and UI are absent. RetroAchievements from1.2.4 remains unchanged.
+Native pin slice1200 reused; fresh distribution slice1320-controls125-dist. Legacy English UI
+exception retained; matching en-US/pt-BR short notes were written before the launcher build.
+
+Repeated checks: CTest43/43, Python641 tests/24skipped, Rust381 passed/4ignored, UI focus114/114
+and navigation154/154 with no JS errors. Official release build/path scan passed. Installer
+extraction matched all24 staged program files plus WebView2 (the signed bootstrapper was verified too).
+Installer29,041,073bytes, SHA256556e7725d11146f1f79613814fbf961e1299000bd56df7c8831a324213003a74.
+Launcher SHA2563a2044c63e2a245e62c212232cee6d88b567b1cd8c84a994f7983e51101fb8c6;
+game SHA2566ea86e695d058bf954292d2967be42d5d3e0b85d4aa25c0cabfcf98b38a47116.
+Final publication is authorized; receipt follows after upload. No new physical controller,
+real-account unlock or installer execution is claimed. CoreGS/modern worktrees remain untouched.
+
+
 ## TASK-131: restore the 1.2.4 program baseline (2026-10-26)
 
 Owner requested shelving the existing private 1.2.5 wheel build, returning main's program
