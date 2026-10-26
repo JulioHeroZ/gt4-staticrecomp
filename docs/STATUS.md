@@ -1,5 +1,20 @@
 # Current Status
 
+## TASK-121 configurable wheel integration for 1.2.5 (2026-10-26)
+
+PR #100 is merged through #106 at main8b73fa0. PR #101 (latest6da047cf) and integration #109
+(99f8dc48) are reviewed on task/121-wheel-integration, preserving both external authors.
+The original conflicts and routing/capture/configuration/haptic lifecycle defects are corrected.
+Fresh slice1210 built and passed CTest 44/44, Python 641 tests (42 skipped), Rust 391 passed
+(4 ignored), UI focus 114/114 and navigation 169/169 with no JavaScript errors. Recorded real
+wheel UI calls passed replay through Rust. Both independent static reviews approved the result.
+
+Ready for owner-authorized source merge. Target is 1.2.5, then a forward-port to 1.3.0-rc7 with
+frame skipping and RA disabled for Spec II. No release publication or 1.3.0 worktree change here.
+Current Latest remains 1.2.4; rc6 remains public. Hardware gameplay and actual force-feedback
+quality remain unvalidated. Guest wheel USB protocol, direct gears, clutch and active damper/
+force inversion are not implemented; see docs/WHEEL.md for the supported input/feedback scope.
+
 ## TASK-120 external controller contribution integration (2026-10-25)
 
 Owner requested sequential acceptance of PR #100 (DualSense triggers), then PR #101 (racing wheels).
@@ -8,9 +23,9 @@ Its TASKS-only conflict is resolved without dropping TASK-119 and its conflictin
 is replaced by TASK-120. Review corrections retain standard SDL trigger semantics, remove unsupported
 signed-axis modes and keep the contributed response curves. Full native slice1200 build and focused CTest native_audio_input, native_controls and native_pad_mapping
 passed (3/3), including the actual production SDL adapter with virtual PS5/Xbox devices. New immutable
-`docs/inputs/slice1200-pcsx2.json` retains the slice1190 inputs and RA hashes. Full CTest/Python,
-Rust workspace and UI validation remain pending; actual controller hardware is unvalidated.
-No PR is accepted by this preparation record and no release is planned by this request.
+`docs/inputs/slice1200-pcsx2.json` retains slice1190 inputs and RA hashes. Full CTest 43/43, Python
+641 tests/42 skipped, Rust 381 passed/4 ignored, UI focus 114/114 and navigation 154/154 passed.
+Merged through PR #106 at `8b73fa0`; actual controller hardware remains unvalidated. No release.
 Preserve all 1.2.4 RetroAchievements fixes. See [integration mapping](PR-100-101-INTEGRATION.md).
 
 ## TASK-119 release 1.2.4: RetroAchievements (2026-10-25)

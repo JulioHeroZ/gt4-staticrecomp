@@ -7,8 +7,8 @@ before each merge. This work does not authorize or create another release.
 
 | Step | Contribution | Integration base | Scope and state |
 | --- | --- | --- | --- |
-| 1 | PR #100 by luanantony, head `a36486d333c8fa23b89e1bddaa2404979b53dd87` | main `90af154`, stable 1.2.4 plus publication records | TASK-120, dedicated `task/120-dualsense-integration`; static review and native/Rust/UI checks passed; ready for integration |
-| 2 | PR #101 by JulioHeroZ, head `921ee810ce453036ee47ae5fcce9fd4190ae6344` at inventory | main after step 1 has been reviewed, validated and merged | Racing-wheel contribution associated with TASK-018; refresh the remote head and map its delta before starting |
+| 1 | PR #100 by luanantony, head `a36486d333c8fa23b89e1bddaa2404979b53dd87` | main `90af154`, stable 1.2.4 plus publication records | TASK-120 merged through PR #106 at main `8b73fa0`; original PR #100 merged; all recorded automated checks passed |
+| 2 | PR #101 by JulioHeroZ, head `921ee810ce453036ee47ae5fcce9fd4190ae6344` at inventory | main `8b73fa0` after PR #106 | TASK-121, dedicated `task/121-wheel-integration`; three conflicts resolved, independent reviews pending |
 
 The original contributor commits and authorship must remain in the merge ancestry. Use a normal merge
 without history rewriting. If the external branch cannot be updated, use a separate integration PR in
@@ -90,3 +90,41 @@ writer; the orchestrator must run and record them before merge. No active 1.3.0 
 ported by either integration step.
 
 Step 1 observed checks: CTest 43/43, Python 641 (42 skipped), Rust 381 passed (4 ignored), UI focus 114/114 and navigation 154/154. New immutable slice1200 records the rebuilt game hash; no published asset was changed.
+
+## Step 2 initial integration record
+
+PR #100 and its follow-up integration are merged; step 2 now starts from their reviewed result. PR #101
+head is `921ee810ce453036ee47ae5fcce9fd4190ae6344`. The source imports conflict in `commands.rs` is
+resolved by keeping `wheel::{self, WheelConfig}` and `LAUNCHER_DISPLAY_VERSION`. Conflicts in
+`ui/dev/index.html` and `ui/dev/focus-check.html` are resolved by retaining both Wheel and Achievements
+page scripts. No source behavior was otherwise changed during this conflict-resolution pass.
+
+The merged account-revision, cancelable HTTP and stale-response protections remain; all seven curves
+and the standardized SDL Gamepad adapter remain. Reviewers audit native routing/haptics and Rust/UI
+configuration independently before any further fixes. Fresh slice1210 output and a new manifest derived
+from slice1200 are reserved for after code review and a successful native build; no old pin is edited.
+
+This contribution is linked to TASK-018 but does not establish actual Logitech USB identity, physical
+wheel/pedal behavior or real force-feedback operation. No physical haptic test or owner application,
+settings, card/save, active session or 1.3.0 worktree mutation is performed. No release is created.
+
+## Validated update and release destination (2026-10-26)
+
+The owner assigned these options to 1.2.5 on the stable code line, then a port to 1.3.0-rc7.
+PR #101 advanced to6da047cf. PR #109 (99f8dc48, luanantony) contributes the same original conflict
+resolution, based on the earlier921ee810 wheel head. Include both histories without restoring
+old behavior. Newly reviewed vendor/axis-count guesses are narrowed to actual wheel identity.
+Native ownership precedes gamepad polling; snapshots retain instance IDs; focus/disconnect/stop
+clear all force outputs. Capture is GUID-qualified, hotplug-safe, and neutral for missing/ambiguous
+devices. The real UI/backend key and telemetry contracts are exercised rather than trusting a
+permissive mock. No guest physics, native USB wheel identity, direct gear or clutch feature is added.
+
+Final checks: CTest44/44, Python641 (42 skipped), Rust391 passed (4 ignored), actual UI focus114/114,
+navigation169/169 and recorded setting-command replay. New slice1210 runtime/pin preserves old
+inputs and manifests. Physical hardware/force feedback remain owner acceptance. Both static reviews
+approved the result. No release asset, modern 1.3.0 checkout or render-skip checkout is changed.
+
+Future rc7 acceptance must preserve EE/IOP fixed timing and the frame-skip decision, test controller
+and wheel routing with both game targets, keep RA off for Spec II, and integrate en-US/pt-BR UI
+strings into the modern launcher. It is a separate source port after this integration, not a reuse
+of the old launcher or a replacement of published rc6 assets.

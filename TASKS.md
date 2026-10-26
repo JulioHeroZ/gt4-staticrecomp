@@ -57,7 +57,7 @@ See [GS renderer options](docs/GS-RENDERER-OPTIONS.md) and [GSDX-PLAN](docs/GSDX
 | TASK‑015 | LWR sign-extension fidelity check | ✅ Done (already correct; no change) |
 | TASK‑016 | IOP per-module cost counters and review | ⏸️ Deferred (not needed for 1.0.0) |
 | TASK‑017 | License-test crash | ✅ Done (2026-10-16) · license demo guard on both demo loaders (slice206, `--mode pcsx2`): licenses playable, demos that decrypt wrong are skipped as in PCSX2 default; root cause moved to TASK‑063 |
-| TASK‑018 | Racing wheels with force feedback: the game sees a Logitech Driving Force GT, force feedback through SDL3, a Wheel tab in the launcher | 📋 Planned · release 1.4.0 (owner, 2026-10-22) |
+| TASK‑018 | Universal configurable racing wheel support (`wheel.toml`, multi-device SDL3 joystick/pedals/shifter/handbrake, 5 pedal axis polarities, steering lock & linearity, FFB/haptics, Launcher Racing Wheel configurator) | 🧪 Waiting for owner test (`task/018-racing-wheels`, docs/WHEEL.md) |
 | TASK‑019 | Launcher 1.0.0 (Rust core + Tauri 2 HTML frontend) and NSIS per-user installer | ✅ Launcher merged into main (2026-10-21): setup with disc copy, gt4-gs download, settings, saves, controls (SDL3), tray, updates; owner tested end to end. Still for 1.0.0: NSIS installer build and the v1.0.0 release |
 | TASK‑020 | Decomp names in generated EE code (waits for more decompilation progress) | 📋 Planned |
 | TASK‑025 | Save manager: memory card slots, import/export | ✅ Code done, merged into `task/019-launcher`; ships with the launcher (owner test pending) |
@@ -836,6 +836,10 @@ game's force-feedback commands go to SDL3 haptics. The launcher gets a new Wheel
 feedback strength, pedals and buttons, a live test). Study first: the GT4 USB stack (USBD, PDIUSB, LGDEV IRX,
 docs/IOP-MAP.md), where to answer as a DFGT, and the force-feedback command set.
 
+Owner update 2026-10-26: the configurable host-input subset is implemented by TASK-121 for
+1.2.5, then rc7. The guest USB/Logitech identity and force-feedback protocol described above
+remain future acceptance; this contribution does not mark that complete.
+
 ### TASK-075 — Input layer on SDL3
 Owner decision 2026-10-21. Replace the game's XInput-only pad code (native/host_io.cpp) with one input layer on
 SDL3 (zlib licence, fine in the MIT game exe; also the Linux and Android path, TASK-074 and TASK-022). SDL3 opens
@@ -1578,10 +1582,10 @@ and validate each contribution separately. Contributor: luanantony (Luan Antony)
 Worktree `C:\Antigravity\gt4-wt-120-dualsense-integration`, branch `task/120-dualsense-integration`,
 based on stable 1.2.4 main `90af154`.
 
-State: conflict resolution and review corrections prepared. Full slice1200 native build and focused
-CTest native_audio_input, native_controls and native_pad_mapping passed (3/3). Immutable
-`docs/inputs/slice1200-pcsx2.json` preserves slice1190 inputs and RA source hashes. Full CTest/Python,
-Rust workspace and UI checks remain pending; no merge or new release yet. The incoming task label TASK-104 was incorrect: that number belongs to save import
+State: merged through integration PR #106 at `8b73fa0` on 2026-10-25; original PR #100 is merged.
+CTest 43/43, Python 641 tests/42 skipped, Rust 381 passed/4 ignored, UI focus 114/114 and
+navigation 154/154 passed. Immutable slice1200 preserves slice1190 inputs and RA hashes.
+No hardware gameplay or release performed. The incoming task label TASK-104 was incorrect: that number belongs to save import
 on the 1.3.0 line. This contribution is tracked as TASK-120 and relates to planned controller tuning
 TASK-110; it does not mark that broader future task complete.
 
@@ -1600,3 +1604,27 @@ installed application, owner card/save or active game session is changed. PR #10
 See `docs/PR-100-101-INTEGRATION.md` for the sequential mapping and acceptance limits.
 
 TASK-120 validation result (2026-10-25): CTest 43/43; Python 641 tests, 42 skipped; Rust 381 passed, 4 ignored; UI focus 114/114 and navigation 154/154, no JavaScript errors. Owner authorized sequential integration. Physical controller gameplay remains unvalidated; no release created.
+
+
+### TASK-121 — Integrate PR #101 and #109: configurable racing wheels
+
+Owner approved sequential integration on 2026-10-25 and assigned these contributions to stable
+1.2.5 on 2026-10-26, followed by a port to 1.3.0-rc7 preserving frame skipping. PR #100 is already
+merged through #106 at main8b73fa0. PR #101 by JulioHeroZ now ends at
+`6da047cf5ca9829224ade13dd84e9c797129bdf8`; PR #109 by luanantony contributes conflict-resolution
+commit `99f8dc48f6f6fc9ecfc0421bf0e75758203ea6bf`. Both histories are preserved by integration.
+
+State: implementation and automated acceptance complete, owner-authorized merge pending.
+Three original conflicts are resolved. Independent native and Rust/UI static reviews approved
+routing, opt-in defaults, unique physical identity, full haptic stop, capture and UI/backend contracts.
+Fresh slice1210 build/pin: CTest 44/44, Python 641 tests (42 skipped), Rust workspace 391 passed
+(4 ignored), actual UI focus 114/114 and navigation 169/169. Actual UI setting commands were
+recorded and replayed through real Rust command bodies. No physical haptics or gameplay claimed.
+
+This implements configurable host input through existing gamepad actions, contributing to TASK-018.
+Native guest wheel USB identity/protocol, physics-derived torque, direct gear selection and manual
+clutch remain outside this implementation; damper/inversion fields are reserved and inactive.
+Existing RetroAchievements protections and TASK-120 controller curves/standardized SDL triggers stay.
+See docs/WHEEL.md and docs/PR-100-101-INTEGRATION.md. No new release is built or published here;
+1.2.4 remains Latest. The later rc7 port must keep RA disabled for Spec II and pass both-game,
+frame-skipping, input and language gates without replacing published rc6 assets.
