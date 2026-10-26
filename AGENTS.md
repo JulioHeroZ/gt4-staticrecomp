@@ -121,6 +121,13 @@ github.com/Kaezzey/gt4-staticrecomp is read-only.
 
 ## Workflow
 
+- **Agent task handoff (owner, 2026-10-26):** before handing any task to another agent,
+  write its consolidated plan as a `.md` file inside the exact worktree where that agent
+  will operate (normally `docs/tasks/`). The plan holds scope, references, constraints,
+  validation and review gates. End the handoff response with a ready-to-copy prompt for
+  the owner to paste into a fresh agent chat, naming the absolute workspace and plan-file
+  paths plus required first reads. Keep that prompt short; do not duplicate the plan in it.
+  Preparing a handoff does not authorize launching or messaging an agent.
 - Speak Brazilian Portuguese with the owner, in plain lay language. Keep all
   repository docs, reports, prompts and code comments in en-US.
 - The main agent orchestrates, reviews and tests; implementation and research go
