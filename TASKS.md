@@ -1764,7 +1764,7 @@ controller-only 1.2.5, after review and checks. Branch task/132-release-125-cont
 from main749af82 and reapplies exact program blobs from reviewed integration8b73fa0
 (PR #100 via #106), before wheel integration. No Git history is rewritten.
 
-State: controller-only release verified; owner authorized final publication after passing checks. Only launcher,
+State: done, published stable Latest v1.2.5 (2026-10-26), PR #125 / merge5d7a669. Only launcher,
 workspace lockfile, Tauri metadata and installer version change beyond that reviewed code.
 Native game reuses immutable slice1200-pcsx2.json; fresh distribution slice1320-controls125-dist.
 No wheel implementation or wheel UI is included; native DFP remains TASK-018 / research123.
@@ -1776,3 +1776,10 @@ and navigation154/154 with no script errors. Official launcher build/path scan a
 extraction/hash comparison passed. Publication follows the owner-authorized final release step.
 No new physical controller, account-unlock or installer execution validation is claimed.
 This supersedes the held TASK-122 wheel release candidate; keep its historical branch intact.
+
+TASK-132 publication receipt: old private wheel draft deleted; new controller-only draft asset
+sizes/SHA256 digests verified before owner-authorized final publication. Release v1.2.5 is
+public, not a pre-release, Latest; tag points at5d7a669bdecf5e60c0782ca449f48aacac3c7a32.
+https://github.com/moesuito/gt4-staticrecomp/releases/tag/v1.2.5
+Installer SHA256556e7725d11146f1f79613814fbf961e1299000bd56df7c8831a324213003a74.
+No new wheel support, Spec II, frame skipping or CoreGS changes are included.

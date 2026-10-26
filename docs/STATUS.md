@@ -1,6 +1,6 @@
 # Current Status
 
-## TASK-132: verified controller-only 1.2.5 (2026-10-26)
+## TASK-132: controller-only 1.2.5 published as Latest (2026-10-26)
 
 Owner authorized replacing the private wheel draft and publishing a final1.2.5 after checks.
 Branch task/132-release-125-controls reapplies exact reviewed controller integration8b73fa0
@@ -15,7 +15,9 @@ extraction matched all24 staged program files plus WebView2 (the signed bootstra
 Installer29,041,073bytes, SHA256556e7725d11146f1f79613814fbf961e1299000bd56df7c8831a324213003a74.
 Launcher SHA2563a2044c63e2a245e62c212232cee6d88b567b1cd8c84a994f7983e51101fb8c6;
 game SHA2566ea86e695d058bf954292d2967be42d5d3e0b85d4aa25c0cabfcf98b38a47116.
-Final publication is authorized; receipt follows after upload. No new physical controller,
+Published stable Latest v1.2.5 after draft upload/digest verification, PR #125 / merge5d7a669.
+The old private wheel draft was deleted. Tag v1.2.5 points at5d7a669; public API confirms
+Latest=v1.2.5 and isDraft=false/isPrerelease=false. No new physical controller,
 real-account unlock or installer execution is claimed. CoreGS/modern worktrees remain untouched.
 
 
