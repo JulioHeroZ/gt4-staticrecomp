@@ -38,11 +38,61 @@ pub struct CapturedWheelInput {
     pub device_name: String,
 }
 
+/// Extracts (Vendor ID, Product ID) from an SDL 32-character hex GUID string.
+pub fn parse_guid_vid_pid(guid: &str) -> Option<(u16, u16)> {
+    if guid.len() < 20 {
+        return None;
+    }
+    let vid_b0 = u8::from_str_radix(&guid[8..10], 16).ok()?;
+    let vid_b1 = u8::from_str_radix(&guid[10..12], 16).ok()?;
+    let pid_b0 = u8::from_str_radix(&guid[16..18], 16).ok()?;
+    let pid_b1 = u8::from_str_radix(&guid[18..20], 16).ok()?;
+    let vid = ((vid_b1 as u16) << 8) | (vid_b0 as u16);
+    let pid = ((pid_b1 as u16) << 8) | (pid_b0 as u16);
+    Some((vid, pid))
+}
+
+pub fn is_wheel_vendor(vid: u16) -> bool {
+    matches!(
+        vid,
+        0x0F0D // HORI
+        | 0x046D // Logitech
+        | 0x044F // Thrustmaster
+        | 0x0EB7 // Fanatec
+        | 0x1209 // Moza
+        | 0x3416 // Cammus
+        | 0x16D0 // SimuCube
+    )
+}
+
+pub fn format_friendly_device_name(name: &str, guid: &str) -> String {
+    if let Some((vid, pid)) = parse_guid_vid_pid(guid) {
+        if vid == 0x0F0D {
+            if pid == 0x00A4 {
+                return format!("HORI Racing Wheel Apex ({name})");
+            }
+            return format!("HORI Racing Wheel ({name})");
+        } else if vid == 0x046D {
+            return format!("Logitech Wheel ({name})");
+        } else if vid == 0x044F {
+            return format!("Thrustmaster Wheel ({name})");
+        } else if vid == 0x0EB7 {
+            return format!("Fanatec Wheel ({name})");
+        }
+    }
+    name.to_string()
+}
+
 /// Returns true if a device is a racing wheel candidate (SDL wheel type, wheel/pedal/shifter keywords,
 /// or a non-gamepad USB HID joystick).
-pub fn is_candidate_wheel(sdl_is_wheel: bool, sdl_is_gamepad: bool, name: &str) -> bool {
+pub fn is_candidate_wheel(sdl_is_wheel: bool, sdl_is_gamepad: bool, name: &str, guid: &str) -> bool {
     if sdl_is_wheel {
         return true;
+    }
+    if let Some((vid, _)) = parse_guid_vid_pid(guid) {
+        if is_wheel_vendor(vid) {
+            return true;
+        }
     }
     let lower = name.to_ascii_lowercase();
     const KEYWORDS: &[&str] = &[
@@ -89,7 +139,21 @@ pub fn select_primary_wheel_device<'a>(
     devices
         .iter()
         .find(|d| d.is_wheel)
+        .or_else(|| {
+            devices.iter().find(|d| {
+                parse_guid_vid_pid(&d.guid)
+                    .map(|(vid, _)| is_wheel_vendor(vid))
+                    .unwrap_or(false)
+            })
+        })
         .or_else(|| devices.iter().find(|d| !d.is_gamepad))
+        .or_else(|| {
+            devices.iter().find(|d| {
+                parse_guid_vid_pid(&d.guid)
+                    .map(|(vid, _)| vid != 0x045E)
+                    .unwrap_or(true)
+            })
+        })
         .or_else(|| devices.first())
 }
 

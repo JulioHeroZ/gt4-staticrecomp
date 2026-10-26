@@ -10,7 +10,7 @@ use sdl3::joystick::{Joystick, JoystickType};
 use sdl3::{EventPump, GamepadSubsystem, HapticSubsystem, JoystickSubsystem, Sdl};
 
 use crate::pad::RawPad;
-use crate::sdl_wheels::{is_candidate_wheel, select_primary_wheel_device, RawWheelDeviceState, WheelDeviceInfo};
+use crate::sdl_wheels::{format_friendly_device_name, is_candidate_wheel, select_primary_wheel_device, RawWheelDeviceState, WheelDeviceInfo};
 
 /// One connected pad as SDL names it.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -174,12 +174,13 @@ impl SdlPads {
                     JoystickType::from_ll(sdl3::sys::joystick::SDL_GetJoystickType(joy.raw()))
                 };
                 let is_gamepad = self.open.contains_key(&id);
-                let is_wheel = is_candidate_wheel(sdl_type == JoystickType::Wheel, is_gamepad, &name);
+                let is_wheel = is_candidate_wheel(sdl_type == JoystickType::Wheel, is_gamepad, &name, &guid);
+                let friendly_name = format_friendly_device_name(&name, &guid);
                 let has_ffb = unsafe { sdl3::sys::haptic::SDL_IsJoystickHaptic(joy.raw()) };
                 WheelDeviceInfo {
                     id,
                     guid,
-                    name,
+                    name: friendly_name,
                     is_wheel,
                     is_gamepad,
                     num_axes: joy.num_axes(),
@@ -207,7 +208,8 @@ impl SdlPads {
                     JoystickType::from_ll(sdl3::sys::joystick::SDL_GetJoystickType(joy.raw()))
                 };
                 let is_gamepad = self.open.contains_key(&id);
-                let is_wheel = is_candidate_wheel(sdl_type == JoystickType::Wheel, is_gamepad, &name);
+                let is_wheel = is_candidate_wheel(sdl_type == JoystickType::Wheel, is_gamepad, &name, &guid);
+                let name = format_friendly_device_name(&name, &guid);
 
                 let num_axes = joy.num_axes();
                 let mut axes = Vec::with_capacity(num_axes as usize);

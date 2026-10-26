@@ -862,6 +862,18 @@ WheelConfig load_wheel_file(const std::string &path) {
 WheelConfig load_wheel_from_environment(bool *has_explicit_file) {
   const char *path = std::getenv("GT4_WHEEL_FILE");
   if (!path || *path == '\0') {
+#ifdef _WIN32
+    const char *appdata = std::getenv("APPDATA");
+    if (appdata && *appdata != '\0') {
+      const std::string candidate = std::string(appdata) + "\\GT4Recomp\\wheel.toml";
+      std::ifstream check(candidate, std::ios::binary);
+      if (check.good()) {
+        if (has_explicit_file)
+          *has_explicit_file = true;
+        return load_wheel_file(candidate);
+      }
+    }
+#endif
     if (has_explicit_file)
       *has_explicit_file = false;
     return default_wheel_config();
@@ -940,9 +952,58 @@ std::uint8_t read_pedal(const PedalConfig &config, std::int16_t raw_axis, bool d
   return static_cast<std::uint8_t>(std::clamp(std::max(1, byte_val), 1, 255));
 }
 
-bool is_candidate_wheel_device(bool sdl_is_wheel_type, bool sdl_is_gamepad, std::string_view device_name) {
+bool extract_guid_vid_pid(std::string_view guid, std::uint16_t &vid, std::uint16_t &pid) {
+  if (guid.size() < 20)
+    return false;
+  auto hex_val = [](char c) -> int {
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+    return -1;
+  };
+  auto parse_u16_le = [&](std::size_t offset) -> int {
+    int b0_hi = hex_val(guid[offset]);
+    int b0_lo = hex_val(guid[offset + 1]);
+    int b1_hi = hex_val(guid[offset + 2]);
+    int b1_lo = hex_val(guid[offset + 3]);
+    if (b0_lo < 0 || b0_hi < 0 || b1_lo < 0 || b1_hi < 0) return -1;
+    const auto byte0 = static_cast<std::uint8_t>((b0_hi << 4) | b0_lo);
+    const auto byte1 = static_cast<std::uint8_t>((b1_hi << 4) | b1_lo);
+    return static_cast<int>(byte0 | (static_cast<std::uint16_t>(byte1) << 8));
+  };
+  int parsed_vid = parse_u16_le(8);
+  int parsed_pid = parse_u16_le(16);
+  if (parsed_vid < 0 || parsed_pid < 0)
+    return false;
+  vid = static_cast<std::uint16_t>(parsed_vid);
+  pid = static_cast<std::uint16_t>(parsed_pid);
+  return true;
+}
+
+bool is_known_wheel_vendor(std::uint16_t vid) {
+  switch (vid) {
+  case 0x0F0D: // HORI
+  case 0x046D: // Logitech
+  case 0x044F: // Thrustmaster
+  case 0x0EB7: // Fanatec
+  case 0x1209: // Moza
+  case 0x3416: // Cammus
+  case 0x16D0: // SimuCube
+    return true;
+  default:
+    return false;
+  }
+}
+
+bool is_candidate_wheel_device(bool sdl_is_wheel_type, bool sdl_is_gamepad, std::string_view device_name,
+                                std::string_view guid) {
   if (sdl_is_wheel_type)
     return true;
+  std::uint16_t vid = 0, pid = 0;
+  if (!guid.empty() && extract_guid_vid_pid(guid, vid, pid)) {
+    if (is_known_wheel_vendor(vid))
+      return true;
+  }
   const std::string lower = to_lower_ascii(device_name);
   constexpr std::array<std::string_view, 24> kWheelKeywords{{
       "wheel",      "driving force", "g29",      "g920",     "g923",       "g27",
@@ -969,21 +1030,67 @@ int select_primary_device(const WheelConfig &config, const std::vector<DeviceRea
     }
     return -1;
   }
-  // Prefer an explicit wheel device first, then any non-gamepad joystick.
+
+  // 1. If preset specifies vendor, match matching vendor in GUID first:
+  if (config.preset == "hori") {
+    for (std::size_t i = 0; i < devices.size(); ++i) {
+      std::uint16_t vid = 0, pid = 0;
+      if (extract_guid_vid_pid(devices[i].guid, vid, pid) && vid == 0x0F0D)
+        return static_cast<int>(i);
+    }
+  } else if (config.preset == "logitech") {
+    for (std::size_t i = 0; i < devices.size(); ++i) {
+      std::uint16_t vid = 0, pid = 0;
+      if (extract_guid_vid_pid(devices[i].guid, vid, pid) && vid == 0x046D)
+        return static_cast<int>(i);
+    }
+  } else if (config.preset == "thrustmaster") {
+    for (std::size_t i = 0; i < devices.size(); ++i) {
+      std::uint16_t vid = 0, pid = 0;
+      if (extract_guid_vid_pid(devices[i].guid, vid, pid) && vid == 0x044F)
+        return static_cast<int>(i);
+    }
+  } else if (config.preset == "fanatec") {
+    for (std::size_t i = 0; i < devices.size(); ++i) {
+      std::uint16_t vid = 0, pid = 0;
+      if (extract_guid_vid_pid(devices[i].guid, vid, pid) && vid == 0x0EB7)
+        return static_cast<int>(i);
+    }
+  }
+
+  // 2. Prefer an explicit wheel device type or known wheel vendor:
   for (std::size_t i = 0; i < devices.size(); ++i) {
     if (devices[i].is_wheel)
       return static_cast<int>(i);
   }
   for (std::size_t i = 0; i < devices.size(); ++i) {
-    if (is_candidate_wheel_device(devices[i].is_wheel, devices[i].is_gamepad, devices[i].name))
+    std::uint16_t vid = 0, pid = 0;
+    if (extract_guid_vid_pid(devices[i].guid, vid, pid) && is_known_wheel_vendor(vid))
       return static_cast<int>(i);
   }
+
+  // 3. Name keywords or non-gamepad joysticks:
+  for (std::size_t i = 0; i < devices.size(); ++i) {
+    if (is_candidate_wheel_device(devices[i].is_wheel, devices[i].is_gamepad, devices[i].name, devices[i].guid))
+      return static_cast<int>(i);
+  }
+
+  // 4. Any device with >= 6 axes that is NOT a Microsoft Xbox controller (0x045E):
+  for (std::size_t i = 0; i < devices.size(); ++i) {
+    std::uint16_t vid = 0, pid = 0;
+    extract_guid_vid_pid(devices[i].guid, vid, pid);
+    if (devices[i].axes.size() >= 6 && vid != 0x045E)
+      return static_cast<int>(i);
+  }
+
+  // 5. Fallback for hori preset if non-standard VID:
   if (config.preset == "hori") {
     for (std::size_t i = 0; i < devices.size(); ++i) {
       if (devices[i].axes.size() >= 6)
         return static_cast<int>(i);
     }
   }
+
   return -1;
 }
 
@@ -1233,7 +1340,7 @@ void WheelInput::scan_devices() {
     const std::string name = raw_name ? raw_name : "Unknown USB Device";
     const bool is_wheel_type = SDL_GetJoystickType(joy) == SDL_JOYSTICK_TYPE_WHEEL;
     const bool is_gamepad = SDL_IsGamepad(id);
-    const bool is_wheel = is_candidate_wheel_device(is_wheel_type, is_gamepad, name);
+    const bool is_wheel = is_candidate_wheel_device(is_wheel_type, is_gamepad, name, guid_buf);
 
     // If no explicit device_guid and not a wheel candidate, keep open only if multi-device GUID matches.
     OpenDevice entry;

@@ -189,7 +189,8 @@ double normalize_pedal_axis(PedalAxisMode mode, std::int16_t raw);
 std::uint8_t read_pedal(const PedalConfig &config, std::int16_t raw_axis, bool digital_pressed = false);
 
 // Evaluates whether a device matches auto-detection as a primary racing wheel when device_guid is empty.
-bool is_candidate_wheel_device(bool sdl_is_wheel_type, bool sdl_is_gamepad, std::string_view device_name);
+bool is_candidate_wheel_device(bool sdl_is_wheel_type, bool sdl_is_gamepad, std::string_view device_name,
+                                std::string_view guid = "");
 
 // Selects the primary device index from `devices` according to `config.device_guid`.
 // Returns -1 when no matching wheel device is present.
