@@ -1,4 +1,30 @@
-# Open GitHub issue intake (2026-10-26)
+# Issue intake and local owner reports (2026-10-26)
+
+## Local report: uneven frame pacing in video scenes on i5-7200U
+
+Recorded 2026-10-26; documentation only, without an implementation plan or release target.
+The owner wants this report in repository documentation, not the GitHub issue tracker.
+Issue #114 was created in error and deleted at the owner's explicit request.
+
+- Hardware: i5-7200U laptop with integrated graphics and a shared 15 W power budget.
+  Title-menu background video and the opening movie show uneven frametimes; ordinary
+  menus without video have a smooth graph, according to the owner.
+- Comparison: video scenes are smooth on the owner's Ryzen 7 5700X / RX 9060 XT desktop.
+- Screenshot `Captura de tela 2026-10-26 042303.png`: title background, Vulkan,
+  approximately 55 FPS and instantaneous 8.8 ms; uneven history graph with spikes.
+- Screenshot `Captura de tela 2026-10-26 042401.png`: opening movie, D3D11,
+  approximately 41 FPS and instantaneous 70.4 ms; uneven graph with a pronounced spike.
+  Original screenshots remain at `C:/` and were supplied in chat; not committed.
+- Overlay readings are snapshots, not averages/percentiles. The different graphics APIs
+  do not constitute a controlled comparison. Exact build/settings per image, resolution
+  scaling, frame-skipping switch state and video-scene audio behavior are unverified.
+  Do not assume the separate racing stress test's 2x setting applies here.
+- Keep separate from TASK-082's stale-image/frame-skipping defect. A common cause with
+  performance reports #97/#112 is unknown. Expected: consistent video presentation cadence.
+- Status: recorded only, root cause unknown; no profiling, task number, implementation
+  or release commitment. No agent dispatched.
+
+## Original GitHub intake snapshot
 
 Owner request: register tasks, consolidate duplicates and reuse Claude's existing tasks.
 This is an intake snapshot, not an implementation plan. No code, design steps, estimates,
