@@ -1654,3 +1654,84 @@ Deliver an evidence-backed device/protocol map, HLE-versus-USB boundary analysis
 FFB effect coverage and staged implementation/test plan. No implementation, build, game launch,
 physical force test, release or integration into active rc7 work is authorized by this research.
 The owner starts the economical research agent in OpenCode; Codex reviews its deliverables.
+
+## Open issue intake (owner, 2026-10-26)
+
+Registration and priority triage only: no implementation plan or work has started.
+Urgent defects are candidates for a later 1.3.0 rc before final, subject to owner selection.
+Checked main, the modern launcher and rc6/rc7 task lists, and Claude's ai-memory notes.
+Complete issue coverage: [issue triage](docs/ISSUE-TRIAGE.md).
+
+Existing tasks reused; do not allocate replacements:
+- #86 -> TASK-104 on the 1.3.0 line: the new chain-entry-7937 import failure needs follow-up.
+- #89 -> TASK-105 on the 1.3.0 line: existing integrated-GPU/startup work, reporter validation pending.
+- #98 -> TASK-025: deleted save returns; related to card persistence TASK-058.
+- #88 -> TASK-018 and research TASK-123: native DFP/FFB remains planned for 1.3.1.
+- #97 and #112 -> existing performance backlog TASK-041, related TASK-082/105/116/117/118
+  and the CPU-parity TASK-119 on task/116-117-flare-perf. Retain both hardware reports.
+- #95 -> TASK-053 for reuse of an existing texture directory, TASK-128 for optional external ISO.
+- #92 -> TASK-080/TASK-079 for 4:3, TASK-130 for split-screen display.
+- #87 -> existing TASK-057 mod-scope disposition and the owner's not-planned cheat policy.
+  This is not approval or scheduling of a cheat feature.
+
+TASK-104/105 exist in frozen rc6 commit 58322229c0bd63a0652b0550c5ad2154bd907039.
+The CPU-parity TASK-119 is recorded in commit 9226927 on task/116-117-flare-perf, distinct
+from main's RetroAchievements TASK-119 and task/101's player-one-controller TASK-119.
+No existing task is renumbered, copied as a new task or silently dropped here.
+
+### TASK-124 — Game cannot start (issue #107)
+
+State: recorded, not planned (2026-10-26).
+Issue: https://github.com/moesuito/gt4-staticrecomp/issues/107
+Report: cannot start on both 1.2.4 and 1.3.0; screenshot and log bundle supplied. Cause unknown.
+Priority: high, candidate for an upcoming 1.3.0 rc before final.
+Related: TASK-105 and TASK-129 only if evidence establishes a shared cause; no duplicate confirmed.
+
+### TASK-125 — GT Auto service audio keeps looping (issue #104)
+
+State: recorded, not planned (2026-10-26).
+Issue: https://github.com/moesuito/gt4-staticrecomp/issues/104
+Report: oil-change/car-wash bubble audio persists after the service has finished.
+Priority: normal backlog, release unassigned.
+Related: distinct from missing-output-device startup behavior in TASK-129; no shared cause established.
+
+### TASK-126 — Home key unavailable to ReShade (issue #102)
+
+State: recorded, not planned (2026-10-26).
+Issue: https://github.com/moesuito/gt4-staticrecomp/issues/102
+Report: Home/Pos1 does not open the ReShade options while the game is active.
+Priority: normal backlog, release unassigned.
+Related: existing window/input tasks TASK-038 and TASK-076. No compatibility fix is claimed yet.
+
+### TASK-127 — Flashing window followed by crashes (issue #99)
+
+State: recorded, not planned (2026-10-26).
+Issue: https://github.com/moesuito/gt4-staticrecomp/issues/99
+Report: repeated flashing and random crashes in 1.2.2, 1.2.3 and rc5, for both games; logs attached.
+Priority: high, candidate for an upcoming 1.3.0 rc before final.
+Related: TASK-105 and TASK-124 remain separate until evidence confirms the same cause.
+
+### TASK-128 — Optional use of an existing disc image (issue #95)
+
+State: request recorded, not planned or approved for implementation (2026-10-26).
+Issue: https://github.com/moesuito/gt4-staticrecomp/issues/95
+Request: reuse the original ISO without storing a second full copy. Claude had recorded the idea
+without a task number; it remains an option under consideration, with no release assignment.
+Related: the texture-directory portion of the same issue belongs to existing TASK-053.
+
+### TASK-129 — Keep running without an audio output device (issue #93)
+
+State: recorded, not planned (2026-10-26).
+Issue: https://github.com/moesuito/gt4-staticrecomp/issues/93
+Existing diagnosis: no Windows audio output causes the game to close. Desired behavior: run silently.
+Priority: high, candidate for an upcoming 1.3.0 rc before final. Claude recorded the fix without an ID.
+Deduplication: closed issue #94 is already a duplicate of #93. Issue #107 joins only if confirmed.
+
+### TASK-130 — Split-screen display quality follow-up (issue #92)
+
+State: recorded, not planned (2026-10-26).
+Issue: https://github.com/moesuito/gt4-staticrecomp/issues/92
+Report: split-screen resolution/quality concern; the reporter supplied the requested screenshot.
+Priority: backlog, owner to select release priority. The old split-screen concern had no task number.
+Related: 4:3 stays with TASK-080/TASK-079. Broader two-controller support remains the existing future
+idea; this display intake does not silently schedule it.

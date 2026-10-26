@@ -1,5 +1,13 @@
 # Current Status
 
+## Open issue task intake registered (2026-10-26)
+
+All 14 open issues map to existing tasks or newly recorded TASK-124..130; see ISSUE-TRIAGE.md.
+Claude's existing save/import, GPU, performance, aspect, texture and wheel work is reused.
+Only intake, deduplication and urgency are recorded; no implementation plan or code change.
+Urgent launch/crash/save/audio cases are candidates for later 1.3.0 rcs, subject to owner selection.
+Cheats remain not planned; native wheels remain planned for 1.3.1. No issue or release was changed.
+
 ## Experimental rc7 kit copied to owner laptop (2026-10-26)
 
 At the owner request, Z: portable program files now match the rc7-test082 kit. Four files
