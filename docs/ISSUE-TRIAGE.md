@@ -43,3 +43,20 @@ Sources: live open issues/comments; main fa92d05; modern TASKS at frozen rc6 com
 - High candidates are 124, 127, 129 and existing save/import/GPU work 025/104/105, alongside
   relevant performance work. The owner chooses what enters a subsequent 1.3.0 rc.
 - No particular rc, fix or implementation is promised, and no active task is interrupted.
+
+## Owner-authorized initial replies (2026-10-26)
+
+The owner explicitly requested replying to open issues without a previous moesuito response.
+Rechecked immediately before posting; these five issues still had zero comments. Published
+English replies under the verified moesuito account, acknowledged reports and requested missing
+version/reproduction details. No fix, completion date, closure or release was promised.
+
+- [#107 reply](https://github.com/moesuito/gt4-staticrecomp/issues/107#issuecomment-6410551717)
+- [#104 reply](https://github.com/moesuito/gt4-staticrecomp/issues/104#issuecomment-6410552369)
+- [#102 reply](https://github.com/moesuito/gt4-staticrecomp/issues/102#issuecomment-6410552999)
+- [#99 reply](https://github.com/moesuito/gt4-staticrecomp/issues/99#issuecomment-6410553643)
+- [#98 reply](https://github.com/moesuito/gt4-staticrecomp/issues/98#issuecomment-6410554415)
+
+All five bodies and authors were reread after publication. A fresh open-issue query returned
+no issue without a moesuito comment. Follow-up reports on previously answered issues remain
+separate work; this does not mean every new comment has received another response.
