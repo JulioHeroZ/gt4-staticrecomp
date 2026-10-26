@@ -1,5 +1,15 @@
 # Current Status
 
+## Experimental rc7 kit copied to owner laptop (2026-10-26)
+
+At the owner request, Z: portable program files now match the rc7-test082 kit. Four files
+changed, all backed up and hash-verified; user/data trees and settings hash stayed unchanged.
+No ISO, saves, renderer or Spec II executable changed; no program was launched. Only Spec II
+is prepared there, so the current v2.00-only frame skipping cannot yet be exercised on it.
+PR #113 review and the 13 observed Python failures remain unresolved; this is not release approval.
+See journal 2026-10-26 and private/task082-laptop-update-20261026T065206Z/receipt.json.
+
+
 ## Native DFP wheel scope and research (2026-10-26)
 
 Owner corrected the guest model to Logitech Driving Force Pro (DFP), 900-degree steering with
